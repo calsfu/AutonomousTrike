@@ -10,8 +10,10 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
+include_directories(include)
+
 add_executable(keyop src/CKeyboardOperation.cpp)
-ament_target_dependecies(keyop rclpp geometry_msgs)
+ament_target_dependencies(keyop rclcpp geometry_msgs)
 
 install(TARGETS
   keyop
