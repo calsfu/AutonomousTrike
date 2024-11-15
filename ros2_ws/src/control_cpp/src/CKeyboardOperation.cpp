@@ -3,19 +3,23 @@
 #include <iostream>
 #include <memory>
 
+// Public Include
+
 // Self Include
 #include "control_cpp/CKeyboardOperation.h"
 
-CKeyboardOperation::CKeyboardOperation() : Node("CKeyboardOperation"), isRunning_(true)
+CKeyboardOperation::CKeyboardOperation() : Node("CKeyboardOperation"), isRunning_(true), key_object_()
 {
     publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("robot_twist", 10);
-    
     timer_ = this->create_wall_timer(std::chrono::milliseconds(20), std::bind(&CKeyboardOperation::timerCallback, this));
+
 }
+
 void CKeyboardOperation::timerCallback() 
 {
+    // Add get key here
     char key = 't';
-
+    
     if(key == 'q') 
     {
         RCLCPP_INFO(this->get_logger(), "Shutdown intiated by %s", this->get_name());
@@ -25,7 +29,7 @@ void CKeyboardOperation::timerCallback()
     else 
     {
         double speed_linear = 0.0, speed_angular = 0.0;
-        // std::tie(speed_linear, speed_angular) = key_object->updateSpeeds(key);
+        std::tie(speed_linear, speed_angular) = key_object_->UpdateSpeeds(key);
 
         geometry_msgs::msg::Twist msg;
         msg.linear.x = speed_linear;
