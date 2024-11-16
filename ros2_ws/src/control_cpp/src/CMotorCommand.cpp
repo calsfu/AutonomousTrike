@@ -1,17 +1,23 @@
-// Self Include
-#include "control_cpp/CMotorCommand.h"
+#include "rclcpp/rclcpp.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 
-
-
-CMotorCommand::CMotorCommand() : Node("CMotorCommand")
+class CMotorCommand : public rclcpp::Node 
 {
-    // Get twist and 
-    this->subscriber_ = this->create_subscription<geometry_msgs::msg::Twist>(
-        "robot_twist", 10, std::bind(&CMotorCommand::msgCallback, this));
+public:
+    CMotorCommand() : Node("CMotorCommand")
+    {
+        // Get twist and 
+        this->subscriber_ = this->create_subscription<geometry_msgs::msg::Twist>(
+            "robot_twist", 10, std::bind(&CMotorCommand::msgCallback, this));
 
-}
+    }
 
-void CMotorCommand::msgCallback() 
-{
+    void msgCallback()
+    {
 
-}
+    }
+    
+private:
+    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr subscriber_;
+
+}; // class CMotorCommand
