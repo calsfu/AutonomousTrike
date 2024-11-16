@@ -9,7 +9,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/twist.hpp"
-#include "control_cpp/NRobotModel.h"
+#include "control_cpp/robot_model.h"
 
 
 namespace
@@ -35,7 +35,7 @@ public:
     {
         publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("robot_twist", 10);
         timer_ = this->create_wall_timer(std::chrono::milliseconds(20), std::bind(&CKeyboardOperation::timerCallback, this));
-        key_object_ = std::make_shared<NRobotModel::KeysToVelocites>();
+        key_object_ = std::make_shared<RobotModel::KeysToVelocites>();
 
         // Setup Keyboard
         int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
@@ -88,7 +88,7 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
     rclcpp::TimerBase::SharedPtr timer_;
     bool isRunning_;
-    std::shared_ptr<NRobotModel::KeysToVelocites> key_object_;
+    std::shared_ptr<RobotModel::KeysToVelocites> key_object_;
     struct termios old_term_, new_term_;
     double speed_linear_ = 0.0, speed_angular_ = 0.0;
 

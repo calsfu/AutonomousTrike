@@ -4,7 +4,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tuple>
 
-namespace NRobotModel 
+namespace RobotModel 
 {
     class KeysToVelocites 
     {
