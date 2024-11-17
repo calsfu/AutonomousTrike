@@ -6,6 +6,8 @@
 
 ![FastSAM Speed](assets/head_fig.png)
 
+**update --jason in order to run, download checkpoint and run the liveinterference.py for realtime segmentation**
+
 The **Fast Segment Anything Model(FastSAM)** is a CNN Segment Anything Model trained using only 2% of the SA-1B dataset published by SAM authors. FastSAM achieves comparable performance with
 the SAM method at **50× higher run-time speed**.
 
