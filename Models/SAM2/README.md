@@ -1,4 +1,10 @@
 # SAM 2: Segment Anything in Images and Videos
+**Status Update --jason: SAM2 is bettter than FastSAM, but currently does not have live cam segmentation. in order to test, run scripts/videopredictior.py after downloading the repo and checkpoints and setting the proper directories. For videos use a collection of frames as images in a folder (i used ffmpeg to deconstruct)**
+
+
+
+
+
 
 **[AI at Meta, FAIR](https://ai.meta.com/research/)**
 
