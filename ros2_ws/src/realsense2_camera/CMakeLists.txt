@@ -15,6 +15,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(realsense2_camera)
 
+set(realsense2_DIR "/path/to/realsense2Config.cmake")
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
