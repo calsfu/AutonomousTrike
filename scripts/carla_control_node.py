@@ -1,29 +1,33 @@
-#!/usr/bin/env python
-
-import os
 import sys
-import csv
 import numpy as np
 import argparse
 import logging
 import random
-#import pygame
 import rospy
-import time
+import pygame
+import cv2
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
+from std_msgs.msg import Bool, Float32MultiArray
 
 try:
     sys.path.append('../PythonAPI/carla/dist/carla-0.9.15-py3.7-linux-x86_64.egg')
 except IndexError:
     pass
-
 import carla
 
 saved_fRGB = []
+# OAK-D values
+camera_hz = .01
+camera_pixels_x = 320 * 2 #1280
+camera_pixels_y = 240 * 2 #800
+camera_horiz_fov = 72
 
 class CarlaControlNode:
     def __init__(self):
+        # Get argvs
         argparser = argparse.ArgumentParser(
             description=__doc__)
         argparser.add_argument(
@@ -37,6 +41,12 @@ class CarlaControlNode:
             default=2000,
             type=int,
             help='TCP port to listen to (default: 2000)')
+        argparser.add_argument(
+            '-d', '--deploy',
+            metavar='D',
+            default=1,
+            type=int,
+            help='Take driving input from ViNT')
         args = argparser.parse_args()
         client = carla.Client(args.host, args.port)
         client.set_timeout(10.0)
@@ -47,11 +57,15 @@ class CarlaControlNode:
         self.port = rospy.get_param('~port', 2000)
         self.role_name = rospy.get_param('~role_name', 'self.vehicle')
         pub_driving = rospy.Publisher('driving_reporting', String, queue_size=10)
-        pub_camera = rospy.Publisher('camera', String, queue_size=10)
-
-        # Subscribe to cmd_vel
-        #rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_callback)
-        rospy.Subscriber('driving_declaring', String, self.cmd_vel_callback)
+        pub_camera = rospy.Publisher('camera', Image, queue_size=10)
+        
+        # Start up pygame to watch vehicle drive
+        pygame.init()
+        screen = pygame.display.set_mode((camera_pixels_x, camera_pixels_y))
+        pygame.display.set_caption('image')
+        surface = pygame.image.load("data/test.png").convert()
+        screen.blit(surface, (0, 0))
+        pygame.display.flip()
 
         # Connect to CARLA
         self.client = carla.Client(self.host, self.port)
@@ -77,12 +91,6 @@ class CarlaControlNode:
         else: 
             logging.warning('Could not found any spawn points')
         
-        # OAK-D values
-        camera_hz = .01
-        camera_pixels_x = 320 #1280
-        camera_pixels_y = 240 #800
-        camera_horiz_fov = 72
-
         # Spawn camera
         cam_bp = None
         cam_bp = self.world.get_blueprint_library().find('sensor.camera.rgb')
@@ -100,47 +108,50 @@ class CarlaControlNode:
             array = np.reshape(array, (image.height, image.width, 4))
             array = array[:, :, :3]
             array = array[:, :, ::-1]
+            r,g,b = cv2.split(array)
+            img = cv2.merge([b,g,r])
             global saved_fRGB
-            saved_fRGB.append(array)
+            saved_fRGB.append(img)
 
         ego_front_rgb.listen(lambda image: save_fRGB(image))
 
-        #self.vehicle.set_autopilot(True)
-
-        # Do ROS stuff
-        rate = rospy.Rate(10) # 10hz
-
+        # Watch the wheels, I guess
         spectator = self.world.get_spectator()
         spectator.set_transform(self.vehicle.get_transform())
+
+        # For driving to create a rosbag, or using ViNT
+        if args.deploy:
+            rospy.Subscriber('waypoint', Float32MultiArray, self.waypoint)
+        else:
+            self.vehicle.set_autopilot(True)
+
+        # Main loop
+        rate = rospy.Rate(10) # 10hz
+        bridge = CvBridge()
         world_snapshot = self.world.wait_for_tick() # make sure the camera has called back
         while not rospy.is_shutdown():
             spectator.set_transform(self.vehicle.get_transform())
             control = self.vehicle.get_control()
-            rospy.loginfo("Throttle: " + str(control.throttle) + ", \tSteering: " + str((control.steer,0)[abs(control.steer) < 0.00001]) + ", \tBrake: " + str(control.brake))
             pub_driving.publish(str(control.throttle) + "," + str((control.steer,0)[abs(control.steer) < 0.00001]) + ",: " + str(control.brake))
             global saved_fRGB
             if len(saved_fRGB) != 0:
-                csv_out = ','.join(['%f' % n for n in saved_fRGB[0].flatten()])
-                pub_camera.publish(csv_out)
-                saved_fRGB = [] # i dont like python its weird
+                pub_camera.publish(bridge.cv2_to_imgmsg(saved_fRGB[0], "bgr8"))
+                img = cv2.cvtColor(saved_fRGB[0], cv2.COLOR_BGR2RGB)
+                surface = pygame.surfarray.make_surface(img.swapaxes(0, 1))
+                screen.blit(surface, (0, 0))
+                pygame.display.flip()
+                saved_fRGB = []
             rate.sleep()
 
-    # Drive the car based on ROS message
-    def cmd_vel_callback(self, msg):
-        # Convert Twist message to CARLA control
-        # not actually using twist lol
-        vals = msg.data.split(',')
+    def waypoint(self, msg):
+        print(msg.data)
         control = carla.VehicleControl()
-        control.throttle = max(0.0, min(1.0, float(vals[0])))  # Forward/backward speed
-        control.steer = max(-1.0, min(1.0, float(vals[1])))   # Steering
+        control.throttle = max(0.0, min(1.0, float(msg.data[0])))  # Forward/backward speed
+        control.steer = max(-1.0, min(1.0, float(msg.data[1])))   # Steering
         self.vehicle.apply_control(control)
-
-    #def run(self):
-    #    rospy.spin()
 
 if __name__ == '__main__':
     try:
         node = CarlaControlNode()
-        #node.run()
     except rospy.ROSInterruptException:
         pass
