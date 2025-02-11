@@ -26,6 +26,8 @@ const int servoMax = 600; // Maximum pulse width
 volatile int encoderState = LOW; // The state of the encoder
 volatile int encoderCount = 0;   // Encoder pulse count
 
+int brakeApplied = 0; // Holds current posisition until new command is given, may need to change
+
 void setup() {
   pinMode(encoderPin, INPUT); // Configure encoder pin as input
   pinMode(buttonPin, INPUT_PULLUP); // Configure button pin as input with pull-up resistor
@@ -49,8 +51,20 @@ void setup() {
 void loop() {
   int buttonState = digitalRead(buttonPin); // Read the button state
 
+  if(buttonState == LOW) // button override
+  {
+    brakeApplied = 1;
+  }
+  else if(Serial.available() > 0) { // check for nano input
+    brakeApplied = Serial.read();
+  }
+  else 
+  {
+    brakeApplied = 0;
+  }
+
   // Logic to apply brake based on button press or encoder count
-  if (buttonState == LOW || encoderCount > 10) { // Brake applied if button is pressed or encoder count exceeds threshold
+  if (brakeApplied) { // Brake applied if button is pressed or encoder count exceeds threshold
     Serial.println("Brake Applied.");
     setServoPosition(brakeServo1Channel, brakePosition); // Apply brake with Servo 1
     setServoPosition(brakeServo2Channel, brakePosition); // Apply brake with Servo 2
