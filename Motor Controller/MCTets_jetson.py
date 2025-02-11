@@ -163,10 +163,10 @@ def testReverseSpeed():
 
 
 def testEncoderFeedback():
-    enc = 0;
-    while enc < 100:
+    while position < 100:
         fmotor_control(20)
-        if()
+    rmotor_control(20)
+    time.sleep(10)
 
 #function Map
 function_map = {
