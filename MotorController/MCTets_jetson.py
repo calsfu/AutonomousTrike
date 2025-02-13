@@ -10,57 +10,61 @@ EncoderB = 33
 
 position = 0
 
-# Set up GPIO mode
 GPIO.setmode(GPIO.BOARD)
 
-# Setup motor control pins
+# Setup GPIO pins
+GPIO.setup(enA, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(in1, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(in2, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(enA, GPIO.OUT)
 
-# Initialize PWM on enA
-pwm = GPIO.PWM(enA, 1000)  # Set frequency to 1kHz
+# Set up PWM for motor speed control
+pwm = GPIO.PWM(enA, 1000)  # Set PWM frequency to 1kHz
 pwm.start(0)  # Start with 0% duty cycle
 
-# Set up Encoder pins (Remove pull-up setting)
+# Set up encoder pins
+# GPIO.setup(EncoderA, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+# GPIO.setup(EncoderB, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(EncoderA, GPIO.IN)
 GPIO.setup(EncoderB, GPIO.IN)
 
-# Encoder callback function
+
 def encoder_callback(channel):
     global position
-    A = GPIO.input(EncoderA)
-    B = GPIO.input(EncoderB)
-    
-    if A == B:
+    if GPIO.input(EncoderA) == GPIO.input(EncoderB):
         position += 1  # Clockwise
     else:
-        position -= 1  # Counterclockwise
+        position -= 1  # Counterclockwise   
 
 # Attach interrupt to count pulses
 GPIO.add_event_detect(EncoderA, GPIO.BOTH, callback=encoder_callback)
 
-# Motor control functions
+
 def fmotor_control(speed):
-    """Move forward at specified speed (0-100%)"""
     GPIO.output(in1, GPIO.HIGH)
     GPIO.output(in2, GPIO.LOW)
-    pwm.ChangeDutyCycle(speed)
+    pwm.ChangeDutyCycle(speed)  # Adjust speed (0-100%)
 
 def stop_motor():
-    """Stop motor"""
     GPIO.output(in1, GPIO.LOW)
     GPIO.output(in2, GPIO.LOW)
-    pwm.ChangeDutyCycle(0)
+
+def fmotor_full():
+    GPIO.output(in1, GPIO.HIGH)
+    GPIO.output(in2, GPIO.LOW)
+    pwm.ChangeDutyCycle(100)
 
 def rmotor_control(speed):
-    """Move in reverse at specified speed (0-100%)"""
     GPIO.output(in1, GPIO.LOW)
     GPIO.output(in2, GPIO.HIGH)
-    pwm.ChangeDutyCycle(speed)
+    pwm.ChangeDutyCycle(speed)  # Adjust speed (0-100%)
 
-def test_reversible():
-    """Test bidirectional motion"""
+def rmotor_full():
+    GPIO.output(in1, GPIO.LOW)
+    GPIO.output(in2, GPIO.HIGH)
+    pwm.ChangeDutyCycle(100)
+
+def testReversible():
+    print("Testing Reversible Motion")
     fmotor_control(50)
     time.sleep(1)
     stop_motor()
@@ -70,36 +74,58 @@ def test_reversible():
     stop_motor()
     time.sleep(2)
 
-def test_variable_speed():
-    """Test increasing speed in steps"""
+def testVariableSpeed():
+    print("Testing Variable Speed")
     for speed in [10, 25, 50, 75, 100]:
         fmotor_control(speed)
-        print(f"Speed: {speed}%")
+        print(f"{speed}% speed")
         time.sleep(2)
     stop_motor()
 
-def test_encoder_feedback():
-    """Test motor movement using encoder feedback"""
-    global position
-    position = 0  # Reset position
-    fmotor_control(20)
-    while position < 100:  # Move until 100 counts
-        pass
+def testMaxSpeed():
+    print("Testing Max Speed")
+    fmotor_full()
+    time.sleep(2)
     stop_motor()
-    time.sleep(1)
 
-# Cleanup function
-def cleanup():
-    print("Cleaning up GPIO...")
+def testReverseSpeed():
+    print("Testing Reverse Speed")
+    for speed in [10, 25, 50, 100]:
+        fmotor_control(speed)
+        print(f"Forward {speed}%")
+        time.sleep(2)
+        stop_motor()
+        time.sleep(0.2)
+        rmotor_control(speed)
+        print(f"Reverse {speed}%")
+        time.sleep(2)
+        stop_motor()
+        time.sleep(0.2)
+
+def testEncoderFeedback():
+    global position
+    print("Testing Encoder Feedback")
+    position = 0
+    fmotor_control(20)
+    while position < 100:
+        time.sleep(0.1)
+    stop_motor()
+    rmotor_control(20)
+    time.sleep(5)
+    stop_motor()
+
+# Main execution sequence
+try:
+    testReversible()
+    testVariableSpeed()
+    testMaxSpeed()
+    testReverseSpeed()
+    testEncoderFeedback()
+    
+except KeyboardInterrupt:
+    print("Test interrupted")
+
+finally:
+    print("Cleaning up GPIO")
+    pwm.stop()
     GPIO.cleanup()
-
-# Main function
-if __name__ == "__main__":
-    try:
-        test_reversible()
-        test_variable_speed()
-        test_encoder_feedback()
-    except KeyboardInterrupt:
-        print("Interrupted by user")
-    finally:
-        cleanup()
