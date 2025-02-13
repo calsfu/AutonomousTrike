@@ -47,7 +47,14 @@ class _GetchWindows(object):
         return msvcrt.getch()
 
 class KeyOp(Node):
+    '''
+    Allows for keyboard operation of brakes.
+    TODO: Add another publisher for steering control
+    '''
     def __init__(self):
+        '''
+        Creates a publisher, timer, and getch object
+        '''
         super().__init__('key_op')  # Node name
         self.publisher_ = self.create_publisher(Int8, 'control/brake', 10)  # Create publisher for 'control/brake' topic
         self.timer = self.create_timer(
@@ -57,6 +64,9 @@ class KeyOp(Node):
         self.getch = _Getch()
 
     def timer_callback(self):
+        '''
+        Timer function to be run to fetch a character if a key is pressed
+        '''
         # key = self.getch.get_key()
         key = self.getch()
         msg = Int8()
