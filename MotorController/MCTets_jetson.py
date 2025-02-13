@@ -8,11 +8,11 @@ import time
 import keyboard
 
 #pin definition
-enA = 7 #PWM
-in1 = 11
-in2 = 9
-EncoderA = 12
-EncoderB = 13
+enA = 32 #PWM
+in1 = 31
+in2 = 7
+EncoderA = 15
+EncoderB = 33
 
 position = 0
 
