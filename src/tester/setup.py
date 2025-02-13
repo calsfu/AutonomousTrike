@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'brake_command = tester.brake_command:main',
+            'key_op = tester.key_op:main',
         ],
     },
 )

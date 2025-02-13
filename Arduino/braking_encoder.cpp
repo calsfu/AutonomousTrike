@@ -33,7 +33,7 @@ void setup() {
   pinMode(buttonPin, INPUT_PULLUP); // Configure button pin as input with pull-up resistor
   attachInterrupt(digitalPinToInterrupt(encoderPin), encoderISR, CHANGE); // Attach interrupt to detect encoder signal changes
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("Initializing PCA9685 Servo Driver...");
 
   // Initialize PCA9685
@@ -74,7 +74,9 @@ void loop() {
     setServoPosition(brakeServo2Channel, releasePosition); // Release brake with Servo 2
   }
 
-  delay(100); // Small delay to debounce button input
+  Serial.flush()
+
+  // delay(100); // Small delay to debounce button input
 }
 
 // Interrupt Service Routine (ISR) for encoder signal change
