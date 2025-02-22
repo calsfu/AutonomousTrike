@@ -692,8 +692,9 @@ void VnSensor::disconnect()
 	if (_pi->SimplePortIsOurs)
 	{
 		delete _pi->port;
+
+		_pi->port = NULL;
 	}
-	_pi->port = NULL;
 
 	if (_pi->pSerialPort != NULL)
 	{
