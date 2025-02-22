@@ -1,83 +1,62 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 2.8.3)
+# Compile options so compiles with ROS Kinetic
+# Future releases may want to 
+add_compile_options(-std=c++11)
 project(vectornav)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-
-# TODO[DERECK] fix library warnings
-# if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-#   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-# endif()
-
-# find dependencies
-# TODO[DERECK] Move to auto-dep macro
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(rclcpp_action REQUIRED)
-find_package(rclcpp_components REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(vectornav_msgs REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
-
-# vncxx
-add_subdirectory(vnproglib-1.2.0.0/cpp)
-
-# vectornav library (with composable node)
-add_library(${PROJECT_NAME}_lib SHARED src/vectornav.cc)
-ament_target_dependencies(${PROJECT_NAME}_lib
-  rclcpp rclcpp_components geometry_msgs vectornav_msgs rclcpp_action)
-target_link_libraries(${PROJECT_NAME}_lib vncxx)
-rclcpp_components_register_nodes(${PROJECT_NAME}_lib "vectornav::Vectornav")
-
-# vectornav node
-add_executable(${PROJECT_NAME} src/vectornav_node.cc)
-ament_target_dependencies(${PROJECT_NAME} rclcpp geometry_msgs vectornav_msgs)
-target_link_libraries(${PROJECT_NAME} vncxx ${PROJECT_NAME}_lib)
-
-# vn_sensor_msgs library (with composable node)
-add_library(vn_sensor_msgs_lib SHARED src/vn_sensor_msgs.cc)
-ament_target_dependencies(vn_sensor_msgs_lib
-  rclcpp rclcpp_components sensor_msgs vectornav_msgs tf2_geometry_msgs)
-rclcpp_components_register_nodes(vn_sensor_msgs_lib "vectornav::VnSensorMsgs")
-
-# vn_sensor_msgs node
-add_executable(vn_sensor_msgs src/vn_sensor_msgs_node.cc)
-ament_target_dependencies(vn_sensor_msgs rclcpp geometry_msgs vectornav_msgs)
-target_link_libraries(vn_sensor_msgs vn_sensor_msgs_lib)
-
-
-# install shared libraries with composable nodes into global
-# directory so they can be loaded by other packages
-install(TARGETS
-  ${PROJECT_NAME}_lib
-  vn_sensor_msgs_lib
-  DESTINATION lib)
-
-# install executables into project specific folder
-install(TARGETS
-  ${PROJECT_NAME}
-  vn_sensor_msgs
-  DESTINATION lib/${PROJECT_NAME})
-
-install(DIRECTORY
-  config launch
-  DESTINATION share/${PROJECT_NAME}/
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
+find_package(catkin REQUIRED COMPONENTS
+    roscpp
+    message_generation
 )
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-  list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_copyright)
-endif()
+add_message_files(
+    FILES
+    Ins.msg
+)
 
-ament_export_dependencies(rosidl_default_runtime)
+generate_messages(
+    DEPENDENCIES
+    std_msgs
+)
 
-ament_package()
+###################################
+## catkin specific configuration ##
+###################################
+catkin_package(
+#  INCLUDE_DIRS include
+#  LIBRARIES vectornav
+   CATKIN_DEPENDS roscpp sensor_msgs
+#  DEPENDS system_lib
+)
+
+###########
+## Build ##
+###########
+
+#include(vnproglib-1.1/cpp/CMakeLists.txt)
+add_subdirectory(vnproglib-1.2.0.0/cpp)
+
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+include_directories(vnproglib-1.2.0.0/cpp/include ${catkin_INCLUDE_DIRS})
+
+## Declare a cpp library
+## Declare a cpp executable
+add_executable(vnpub src/main.cpp)
+add_dependencies(vnpub ${PROJECT_NAME}_generate_messages)
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(vnpub
+  libvncxx
+  ${catkin_LIBRARIES}
+)
+
+## Mark executables and/or libraries for installation
+install(TARGETS vnpub
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
