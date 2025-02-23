@@ -11,7 +11,6 @@
 #define COLOR_ORDER GRB   // Most strips use GRB
 CRGB leds[NUM_LEDS];
 
-
 // Create an instance of the PCA9685 driver
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 RCSwitch mySwitch = RCSwitch();
@@ -45,7 +44,6 @@ volatile int encoderCount = 0;   // Encoder pulse count
 long receivedValue = 0; // Store received RF signal
 
 bool brakeApplied = false; // Holds current posisition until new command is given, may need to change
-
 int oldButtonState = LOW;
 
 void setup() {
@@ -137,26 +135,6 @@ void loop() {
   }
 
   Serial.flush();
-
-  // RF Key Fob Logic
-  if (mySwitch.available()) {
-    receivedValue = mySwitch.getReceivedValue(); // Get received value
-    Serial.print("Received RF signal: ");
-    Serial.println(receivedValue);
-
-    // Check if the received value is valid
-    if (receivedValue != 0) {
-      Serial.println("Valid Signal! Activating Buzzer...");
-      digitalWrite(buzzerPin, HIGH); // Turn on buzzer
-      delay(500);                    // Buzzer on for 500 ms
-      digitalWrite(buzzerPin, LOW);   // Turn off buzzer
-
-      // Reset received value to allow repeated activations
-      receivedValue = 0;
-    }
-
-    mySwitch.resetAvailable(); // Reset RF receiver for the next signal
-  }
 
   // delay(100); // Small delay to debounce button input
 }
