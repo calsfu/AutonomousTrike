@@ -4,7 +4,7 @@ import tty
 import termios
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int8
+from std_msgs.msg import Int8, Float32
 
 class _Getch(object):
     """Gets a single character from standard input.  Does not echo to the
@@ -56,29 +56,58 @@ class KeyOp(Node):
         Creates a publisher, timer, and getch object
         '''
         super().__init__('key_op')  # Node name
-        self.publisher_ = self.create_publisher(Int8, 'control/brake', 10)  # Create publisher for 'control/brake' topic
-        self.timer = self.create_timer(
+        self.brake_publisher_ = self.create_publisher(Int8, 'control/brake', 10)  # publisher for braking
+        self.steer_publisher_ = self.create_publisher(Int8, 'control/steer', 10) # publisher for steering
+        self.timer_ = self.create_timer(
             1. / 20,  # Check keys at 50Hz
             self.timer_callback)
 
-        self.getch = _Getch()
+        self.getch_ = _Getch()
 
     def timer_callback(self):
         '''
         Timer function to be run to fetch a character if a key is pressed
         '''
-        # key = self.getch.get_key()
-        key = self.getch()
-        msg = Int8()
-        msg.data = 0
-        if(key == 's'):
-            msg.data = 1
+        key = self.getch_()
+        
+        # brake message
+        brake_msg = Int8()
+        brake_msg.data = 0
+
+        # steer message
+        # steer_msg = Float32()
+        # steer_msg.data = 0.0
+
+        steer_msg = Int8()
+        steer_msg.data = 0
+
+        # check for quit
         if(key == 'q'):
             self.get_logger().info(f'Shutdown initiated by {self.get_name()}')
             self.destroy_node()
 
-        self.publisher_.publish(msg)
-        self.get_logger().info(f'Publishing: {msg.data}')
+        # check for activate brake
+        if(key == 's'):
+            brake_msg.data = 1
+
+        # check for steer
+        # if(key == 'a'):
+        #     steer_msg.data = -1.0
+        # elif(key == 'd'):
+        #     steer_msg.data = 1.0
+
+        if(key == 'a'):
+            steer_msg.data = -1
+        elif(key == 'd'):
+            steer_msg.data = 1
+
+        # publish messages
+        self.brake_publisher_.publish(brake_msg)
+        self.steer_publisher_.publish(steer_msg)
+
+        # log info
+        self.get_logger().info(f'Publishing: {brake_msg.data} to /control/brake')
+        self.get_logger().info(f'Publishing: {steer_msg.data} to /control/steer')
 
 def main(args=None):
     rclpy.init(args=args)  # Initialize ROS2
