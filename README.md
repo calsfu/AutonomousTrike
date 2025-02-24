@@ -46,3 +46,16 @@ source install/setup.bash
 ros2 launch trike main_launch.py
 
 ```
+
+### Testing
+Indivual components can be run using the following commands
+
+- Oak-D camera
+```bash
+ros2 launch depthai_ros_driver camera.launch.py
+```
+
+- Steering and Braking motors
+```bash
+ros2 launch trike trike_launch.py
+```
