@@ -109,6 +109,9 @@ class KeyOp(Node):
         elif(key == 'l'):
             steer_msg.data = 1
 
+        self.last_steer = steer_msg.data
+        self.last_brake = brake_msg.data
+
         # publish messages
         self.brake_publisher_.publish(brake_msg)
         self.steer_publisher_.publish(steer_msg)
