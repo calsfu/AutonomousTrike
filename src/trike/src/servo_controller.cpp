@@ -3,6 +3,8 @@
 #include "std_msgs/msg/int8.hpp"
 #include <boost/asio.hpp>
 #include <string>
+#include <chrono>
+#include <thread>
 
 class ServoController : public rclcpp::Node 
 {
@@ -23,6 +25,8 @@ public:
         } catch (const boost::system::system_error& e) {
             RCLCPP_ERROR(this->get_logger(), "Failed to open serial port: %s", e.what());
         }
+
+        std::this_thread::sleep_for(std::chrono::seconds(2));
 
         unsigned char byte = 0;
         boost::asio::write(serial_port_, boost::asio::buffer(&byte, sizeof(byte)));
