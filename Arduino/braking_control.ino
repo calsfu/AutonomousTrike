@@ -103,6 +103,9 @@ void loop() {
     for (int i = 0; i < NUM_LEDS; i++) {
       leds[i] = CRGB::Red;
     }
+    // push updated LED 
+    FastLED.show();
+    interrupts();
   } else {
     Serial.println("Brake Released.");
     setServoPosition(brakeServo1Channel, releasePosition); // Release brake with Servo 1
@@ -111,8 +114,7 @@ void loop() {
     FastLED.clear();
   }
 
-  // push updated LED 
-  FastLED.show();
+
 
   // RF Key Fob Logic
   if (mySwitch.available()) {

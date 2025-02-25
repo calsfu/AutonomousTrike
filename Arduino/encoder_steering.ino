@@ -56,29 +56,27 @@ void setup() {
 
 void loop() {
   // TODO: control based on angle
-  if(Serial.available() > 0) {
-	Serial.println("recieved");
-	serial_read_pwm = Serial.read(); // 1 byte signed
+  while(Serial.available() > 0) {
+    Serial.println("recieved");
+    serial_read_pwm = Serial.read(); // 1 byte signed
   }
 
   run_motor(serial_read_pwm);
-  Serial.flush();
 }
 
 void run_motor(signed char serial_in) {
 	// Serial.print("serial_in: "); Serial.println(serial_in);
-    if(encoderCount < 2000 && encoderCount > -2000)
-    {
-        if (serial_in > 0) {
-            int pwm_i = constrain(serial_in, MIN_PWM, MAX_PWM);
-            forwardMotor(pwm_i);
-          } else if (serial_in < 0) {
-            int pwm_i = constrain(-serial_in, MIN_PWM, MAX_PWM);
-            reverseMotor(pwm_i);
-          } else {
-            stopMotor();
-          }
+
+    if (serial_in > 0 && encoderCount < 1500) {
+      int pwm_i = constrain(serial_in, MIN_PWM, MAX_PWM);
+      forwardMotor(pwm_i);
+    } else if (serial_in < 0 && encoderCount > -1500) {
+      int pwm_i = constrain(-serial_in, MIN_PWM, MAX_PWM);
+      reverseMotor(pwm_i);
+    } else {
+      stopMotor();
     }
+    
 }
 
 // Function to drive the motor forward
@@ -106,7 +104,7 @@ void reverseMotor(int pwm) {
 
 // Function to brake (stop) the motor
 void stopMotor() {
-  Serial.println("Stoping motor...");
+  // Serial.println("Stoping motor...");
   digitalWrite(in1, LOW);
   digitalWrite(in2, LOW);
   analogWrite(enA, 0);
