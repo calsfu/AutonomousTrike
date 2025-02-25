@@ -19,7 +19,7 @@ public:
             RCLCPP_INFO(this->get_logger(), "Successfully opened serial port: %s", port.c_str());
 
             // set baud rate to 115200
-            serial_port_.set_option(boost::asio::serial_port_base::baud_rate(115200));
+            serial_port_.set_option(boost::asio::serial_port_base::baud_rate(9600));
         } catch (const boost::system::system_error& e) {
             RCLCPP_ERROR(this->get_logger(), "Failed to open serial port: %s", e.what());
         }

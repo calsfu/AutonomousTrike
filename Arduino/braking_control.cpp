@@ -53,7 +53,7 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(encoderPin), encoderISR, CHANGE); // Attach interrupt to detect encoder signal changes
 
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println("Initializing PCA9685 Servo Driver...");
 
   // Initialize PCA9685
