@@ -55,9 +55,9 @@ void setup() {
 }
 
 void loop() {
-  // TODO: control based on angle
+  /// TODO: control based on angle
   while(Serial.available() > 0) {
-    Serial.println("recieved");
+    // Serial.println("recieved");
     serial_read_pwm = Serial.read(); // 1 byte signed
   }
 
