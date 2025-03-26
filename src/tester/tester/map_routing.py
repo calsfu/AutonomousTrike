@@ -23,7 +23,7 @@ print(waypoints)
 # routing
 
 start = (42.3493, -71.1067)  # PHO
-end = ()   # STUVI2
+end = (42.353207, -71.118209)   # STUVI2
 
 url = f'http://router.project-osrm.org/route/v1/driving/{start[1]},{start[0]};{end[1]},{end[0]}?overview=full&geometries=geojson'
 
