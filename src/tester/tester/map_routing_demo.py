@@ -22,17 +22,25 @@ print(waypoints)
 
 # routing
 
+# Coords in (lat, lon) format since that's what google maps uses
 start = (42.3493, -71.1067)  # PHO
 end = (42.353207, -71.118209)   # STUVI2
 
-url = f'http://router.project-osrm.org/route/v1/driving/{start[1]},{start[0]};{end[1]},{end[0]}?overview=full&geometries=geojson'
+url = f'http://router.project-osrm.org/match/v1/cycling/{start[1]},{start[0]};{end[1]},{end[0]}?overview=full&geometries=geojson'
 
 # GET request
 response = requests.get(url)
+
+if response.status_code != 200:
+    print('Failed to get route')
+    exit()
+
 route_data = response.json()
+# print(response.json())  # Check the full response
 
-route_coordinates = route_data['routes'][0]['geometry']['coordinates']
+route_coordinates = route_data['matchings'][0]['geometry']['coordinates']
 
+# will print in the format of [lon, lat]
 print(route_coordinates[:5])
 
 # Create a Basemap instance
