@@ -11,8 +11,8 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
 # Add executables
-add_executable(servo_controller src/servo_controller.cpp)
-add_executable(steering_controller src/steering_controller.cpp)
+add_executable(servo_controller src/embedded/servo_controller.cpp)
+add_executable(steering_controller src/embedded/steering_controller.cpp)
 
 # Link dependencies
 ament_target_dependencies(servo_controller rclcpp std_msgs)
