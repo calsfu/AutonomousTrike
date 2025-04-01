@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'brake_command = tester.brake_command:main',
             'key_op = tester.key_op:main',
+            'emergency_stop = tester.emergency_stop:main',
         ],
     },
 )

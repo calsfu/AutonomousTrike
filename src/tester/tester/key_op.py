@@ -63,6 +63,8 @@ class KeyOp(Node):
             self.timer_callback)
 
         self.getch_ = _Getch()
+        self.last_steer = 0
+        self.last_brake = 0
 
     def timer_callback(self):
         '''
@@ -72,23 +74,26 @@ class KeyOp(Node):
         
         # brake message
         brake_msg = Int8()
-        brake_msg.data = 0
+        brake_msg.data = self.last_brake
 
         # steer message
         # steer_msg = Float32()
         # steer_msg.data = 0.0
 
         steer_msg = Int8()
-        steer_msg.data = 0
+        steer_msg.data = self.last_steer
 
         # check for quit
         if(key == 'q'):
             self.get_logger().info(f'Shutdown initiated by {self.get_name()}')
             self.destroy_node()
-
         # check for activate brake
-        if(key == 's'):
+        # 0 for activate brake, 1 for release brake
+        if(key == 'w'):
+            brake_msg.data = 0
+        elif(key == 's'):
             brake_msg.data = 1
+
 
         # check for steer
         # if(key == 'a'):
@@ -96,10 +101,16 @@ class KeyOp(Node):
         # elif(key == 'd'):
         #     steer_msg.data = 1.0
 
-        if(key == 'a'):
+        # j for left, k for straight, l for right
+        if(key == 'j'):
             steer_msg.data = -1
-        elif(key == 'd'):
+        elif(key == 'k'):
+            steer_msg.data = 0
+        elif(key == 'l'):
             steer_msg.data = 1
+
+        self.last_steer = steer_msg.data
+        self.last_brake = brake_msg.data
 
         # publish messages
         self.brake_publisher_.publish(brake_msg)

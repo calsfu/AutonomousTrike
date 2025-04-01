@@ -20,15 +20,28 @@ public:
 
         try {
             // open the serial port explicitly
-            serial_port_.open(port); 
-            RCLCPP_INFO(this->get_logger(), "Successfully opened serial port: %s", port.c_str());
+            serial_port_.open(port1_); 
+            RCLCPP_INFO(this->get_logger(), "Successfully opened serial port: %s", port1_.c_str());
 
             // set baud rate to 115200
-            serial_port_.set_option(boost::asio::serial_port_base::baud_rate(115200));
+            serial_port_.set_option(boost::asio::serial_port_base::baud_rate(9600));
         } catch (const boost::system::system_error& e) {
             RCLCPP_ERROR(this->get_logger(), "Failed to open serial port: %s", e.what());
-            rclcpp::shutdown();
+            // rclcpp::shutdown();
         }
+
+        try {
+            // open the serial port explicitly
+            serial_port_.open(port2_); 
+            RCLCPP_INFO(this->get_logger(), "Successfully opened serial port: %s", port2_.c_str());
+
+            // set baud rate to 115200
+            serial_port_.set_option(boost::asio::serial_port_base::baud_rate(9600));
+        } catch (const boost::system::system_error& e) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to open serial port: %s", e.what());
+            // rclcpp::shutdown();
+        }
+
 
         unsigned char byte = 0;
         boost::asio::write(serial_port_, boost::asio::buffer(&byte, sizeof(byte)));
@@ -45,10 +58,8 @@ public:
 
     void steering_callback(const std_msgs::msg::Int8::SharedPtr msg) {
         if (serial_port_.is_open()) {
-            unsigned char byte = msg->data;
-            if(byte == 255) {
-                byte = 2; //fix this please
-            }
+            signed char byte = msg->data;
+            byte *= 127;
             boost::asio::write(serial_port_, boost::asio::buffer(&byte, sizeof(byte)));
             RCLCPP_INFO(this->get_logger(), "Sent: %d", byte);
         }
@@ -58,7 +69,8 @@ private:
     rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr subscription_;
     boost::asio::io_service io_;
     boost::asio::serial_port serial_port_;
-    const std::string port = "/dev/ttyUSB1";
+    const std::string port1_ = "/dev/ttyUSB0";
+    const std::string port2_ = "/dev/ttyUSB1";
 };
 
 int main(int argc, char *argv[]) {
