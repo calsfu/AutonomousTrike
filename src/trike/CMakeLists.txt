@@ -33,6 +33,11 @@ install(TARGETS servo_controller steering_controller
   DESTINATION share/${PROJECT_NAME}/
 )
 
+install(DIRECTORY urdf
+  DESTINATION share/${PROJECT_NAME}
+  PATTERN "*.urdf"
+)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
