@@ -70,7 +70,7 @@ private:
     boost::asio::io_service io_;
     boost::asio::serial_port serial_port_;
     const std::string port1_ = "/dev/ttyUSB0";
-    const std::string port2_ = "/dev/ttyUSB1";
+    const std::string port2_ = "/dev/ttyACM1";
 };
 
 int main(int argc, char *argv[]) {
