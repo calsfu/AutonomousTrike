@@ -1,3 +1,0 @@
-[submodule "src/unilidar_sdk"]
-	path = src/unilidar_sdk
-	url = https://github.com/unitreerobotics/unilidar_sdk.git
