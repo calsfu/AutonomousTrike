@@ -16,6 +16,14 @@
 #define LEFT_LIGHT_PIN 5
 #define RIGHT_LIGHT_PIN 12
 
+enum STEERING_STATE {
+  STRAIGHT,
+  LEFT,
+  RIGHT
+};
+
+STEERING_STATE steering_state = STRAIGHT;
+
 // Motor driver pins:
 const int enA = 9;  	// PWM control for motor speed
 const int in1 = 8;  	// Motor driver input 1
@@ -76,29 +84,42 @@ void loop() {
 void run_motor(signed char serial_in) {
 	// Serial.print("serial_in: "); Serial.println(serial_in);
   const unsigned long currentTime = millis();
-  if (serial_in > 0 && encoderCount < 1500) {
+  if (serial_in < 0 && encoderCount < 1500) {
     int pwm_i = constrain(serial_in, MIN_PWM, MAX_PWM);
     forwardMotor(pwm_i);
-    if(currentTime - lastTurnSignalTime >= turnSignalDuration) {
-      turnSignalState = !turnSignalState; // Toggle turn signal state
-      lastTurnSignalTime = currentTime; // Update last time
-    }
-    digitalWrite(RIGHT_LIGHT_PIN, turnSignalState);
-    digitalWrite(LEFT_LIGHT_PIN, LOW);
-  } else if (serial_in < 0 && encoderCount > -1500) {
+    steering_state = RIGHT;
+    lastTime = 0; // ensure it turns on instantly
+  } else if (serial_in > 0 && encoderCount > -1500) {
     int pwm_i = constrain(-serial_in, MIN_PWM, MAX_PWM);
     reverseMotor(pwm_i);
-    if(currentTime - lastTurnSignalTime >= turnSignalDuration) {
-      turnSignalState = !turnSignalState; // Toggle turn signal state
-      lastTurnSignalTime = currentTime; // Update last time
-    }
-    digitalWrite(LEFT_LIGHT_PIN, turnSignalState);
-    digitalWrite(RIGHT_LIGHT_PIN, LOW);
-  } else {
+    steering_state = LEFT;
+    lastTime = 0;
+  }
+  else {
     stopMotor();
-    digitalWrite(LEFT_LIGHT_PIN, LOW);
-    digitalWrite(RIGHT_LIGHT_PIN, LOW);
-    turnSignalState = false;
+    if(encoderCount > -200 && encoderCount < 200) {
+      steering_state = STRAIGHT;
+    }
+  }
+
+  // Update lights
+  if(currentTime - lastTurnSignalTime >= turnSignalDuration) {
+    turnSignalState = !turnSignalState; // Toggle turn signal state
+    lastTurnSignalTime = currentTime; // Update last time
+    switch (steering_state) {
+      case STRAIGHT:
+        digitalWrite(LEFT_LIGHT_PIN, LOW);
+        digitalWrite(RIGHT_LIGHT_PIN, LOW);
+        break;
+      case LEFT:
+        digitalWrite(LEFT_LIGHT_PIN, turnSignalState);
+        digitalWrite(RIGHT_LIGHT_PIN, LOW);
+        break;
+      case RIGHT:
+        digitalWrite(LEFT_LIGHT_PIN, LOW);
+        digitalWrite(RIGHT_LIGHT_PIN, turnSignalState);
+        break;
+    }
   }
 }
 
