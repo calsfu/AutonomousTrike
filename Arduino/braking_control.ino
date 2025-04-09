@@ -1,16 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
-#include <FastLED.h>
 
-// LED strip configuration for addressable LEDs (e.g., WS2812B)
-#define LED_PIN_1 5         // Connect Din to digital pin 5
-#define LED_PIN_2 6         // Connect Din to digital pin 6
-#define NUM_LEDS 20       // Adjust to the number of LEDs on your strip
-#define BRIGHTNESS 100    // Brightness (0-255)
-#define LED_TYPE WS2812B  // Change if your LED strip type differs
-#define COLOR_ORDER GRB   // Most strips use GRB
-CRGB leds1[NUM_LEDS];
-CRGB leds2[NUM_LEDS];
+#define BRAKE_LIGHT_PIN 9  // Digital pin connected to MOSFET gate
 
 // Create an instance of the PCA9685 driver
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
@@ -20,8 +11,10 @@ const int brakeServo1Channel = 0; // Channel for Servo 1
 const int brakeServo2Channel = 1; // Channel for Servo 2
 
 // Define servo positions
-const int releasePosition = 0;  // Position to release the brake
-const int brakePosition = 30;   // Position to apply the brake
+const int servo1ReleasePosition = 65;  // Position to release the brake
+const int servo1BrakePosition = 130;   // Position to apply the brake
+const int servo2ReleasePosition = 90;  // Position to release the brake
+const int servo2BrakePosition = 45;   // Position to apply the brake
 
 // Define PCA9685 pulse width range
 const int servoMin = 150; // Minimum pulse width
@@ -33,26 +26,17 @@ bool brakeAppliedOld = false; // Holds current posisition until new command is g
 void setup() {
   Serial.begin(9600);
   Serial.println("Initializing PCA9685 Servo Driver...");
+  pinMode(BRAKE_LIGHT_PIN, OUTPUT);
 
   // Initialize PCA9685
   pwm.begin();
   pwm.setPWMFreq(50); // Set frequency to 50 Hz (typical for servos)
 
   // Initialize servos to the release position
-  setServoPosition(brakeServo1Channel, releasePosition);
-  setServoPosition(brakeServo2Channel, releasePosition);
+  setServoPosition(brakeServo1Channel, servo1ReleasePosition);
+  setServoPosition(brakeServo2Channel, servo2ReleasePosition);
 
   Serial.println("Servo Brake System Initialized.");
-
-  // Initialize the LED strip using FastLED
-  FastLED.addLeds<LED_TYPE, LED_PIN_1, COLOR_ORDER>(leds1, NUM_LEDS);
-  FastLED.addLeds<LED_TYPE, LED_PIN_2, COLOR_ORDER>(leds2, NUM_LEDS);
-
-  FastLED.setBrightness(BRIGHTNESS);
-  FastLED.clear();
-  FastLED.show();
-
-  Serial.println("LED Initialized");
 }
 
 void loop() {
@@ -63,19 +47,18 @@ void loop() {
 
     if (brakeApplied) { // Brake applied if button is pressed or encoder count exceeds threshold
       // Serial.println("Brake Applied.");
-      setServoPosition(brakeServo1Channel, brakePosition); // Apply brake with Servo 1
-      setServoPosition(brakeServo2Channel, brakePosition); // Apply brake with Servo 2
-      // Set LED strip to red to indicate braking
-      fill_solid(leds1, NUM_LEDS, CRGB::Red);
-      fill_solid(leds2, NUM_LEDS, CRGB::Red);
+      setServoPosition(brakeServo1Channel, servo1BrakePosition); // Apply brake with Servo 1
+      setServoPosition(brakeServo2Channel, servo1BrakePosition); // Apply brake with Servo 2
+      // Turn on lights
+      digitalWrite(BRAKE_LIGHT_PIN, HIGH);  // Turn on lights
+
     } else {
       // Serial.println("Brake Released.");
-      setServoPosition(brakeServo1Channel, releasePosition); // Release brake with Servo 1
-      setServoPosition(brakeServo2Channel, releasePosition); // Release brake with Servo 2
+      setServoPosition(brakeServo1Channel, servo1ReleasePosition); // Release brake with Servo 1
+      setServoPosition(brakeServo2Channel, servo1ReleasePosition); // Release brake with Servo 2
 
-      FastLED.clear();
+      digitalWrite(BRAKE_LIGHT_PIN, LOW);   // Turn off lights
     }
-    FastLED.show();
   }
 
 }
