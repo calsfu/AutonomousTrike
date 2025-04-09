@@ -1,35 +1,16 @@
-#!/usr/bin/env python3
 from launch import LaunchDescription
-from launch_ros.actions import Node
-import os
-from ament_index_python.packages import get_package_share_directory
+from launch.actions import IncludeLaunchDescription
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
+
 
 def generate_launch_description():
-    urdf_path = os.path.join(
-        get_package_share_directory('trike'),
-        'urdf',
-        'rover.urdf'
-    )
-
-    with open(urdf_path, 'r') as infp:
-        robot_description = infp.read()
-
     return LaunchDescription([
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            arguments=['-d', os.path.join(
-                get_package_share_directory('trike'),
-                'rviz',
-                'default.rviz'  # Optional: Create this file if you want a custom RViz config
-            )]
-        ),
-        Node(
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            name='robot_state_publisher',
-            output='screen',
-            parameters=[{'robot_description': robot_description}]
+        IncludeLaunchDescription(
+            PathJoinSubstitution([FindPackageShare('urdf_launch'), 'launch', 'display.launch.py']),
+            launch_arguments={
+                'urdf_package': 'trike',
+                'urdf_package_path': PathJoinSubstitution(['urdf', 'gem.xacro'])
+            }.items()
         )
     ])
