@@ -10,7 +10,7 @@ from cv_bridge import CvBridge
 # tuning constants
 noise_thresh = 1000
 kblur = 20
-safe_cm = 2000
+safe_cm = 3000
 boxes = 6
 box_ring = 1 # can't be > boxes / 2
 
