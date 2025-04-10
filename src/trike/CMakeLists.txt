@@ -38,6 +38,17 @@ install(DIRECTORY urdf
   PATTERN "*.urdf"
 )
 
+install(DIRECTORY param
+  DESTINATION share/${PROJECT_NAME}
+  PATTERN "*.yaml"
+)
+
+install(DIRECTORY map
+  DESTINATION share/${PROJECT_NAME}
+  # has yaml and png files
+  PATTERN "*.yaml"
+  PATTERN "*.png"
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
