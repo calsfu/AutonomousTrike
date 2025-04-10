@@ -10,7 +10,7 @@ def generate_launch_description():
             PathJoinSubstitution([FindPackageShare('urdf_launch'), 'launch', 'display.launch.py']),
             launch_arguments={
                 'urdf_package': 'trike',
-                'urdf_package_path': PathJoinSubstitution(['urdf', 'gem.xacro'])
+                'urdf_package_path': PathJoinSubstitution(['urdf', 'ackerman.xacro'])
             }.items()
         )
     ])

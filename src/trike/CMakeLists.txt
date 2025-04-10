@@ -36,6 +36,7 @@ install(TARGETS servo_controller steering_controller
 install(DIRECTORY urdf
   DESTINATION share/${PROJECT_NAME}
   PATTERN "*.urdf"
+  PATTERN "*.xacro"
 )
 
 
