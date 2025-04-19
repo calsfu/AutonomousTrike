@@ -24,10 +24,10 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch_ros.actions import Node
+from launch.conditions import IfCondition, UnlessCondition
 
 
 def generate_launch_description():
-    namespace = LaunchConfiguration('namespace')
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     urdf_file_name = 'ackerman.urdf'
@@ -60,5 +60,10 @@ def generate_launch_description():
             parameters=[
                     rsp_params,
                     {'use_sim_time': use_sim_time},
-                    {'frame_prefix': PythonExpression(['"', namespace, '/"'])}])
+                    ])
+                    ,
+                    Node(
+        package='joint_state_publisher_gui',
+        executable='joint_state_publisher_gui',
+                    )
     ])

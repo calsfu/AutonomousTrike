@@ -28,6 +28,8 @@ from launch.substitutions import PythonExpression
 from launch.substitutions import ThisLaunchFileDir
 from launch_ros.actions import Node
 from launch_ros.actions import PushRosNamespace
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
@@ -85,10 +87,11 @@ def generate_launch_description():
         PushRosNamespace(namespace),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                [ThisLaunchFileDir(), '/robot_state_publisher.launch.py']),
-            launch_arguments={'use_sim_time': use_sim_time,
-                              'namespace': namespace}.items(),
+            PathJoinSubstitution([FindPackageShare('trike'), 'launch', 'robot_state_publisher.launch.py']),
+            launch_arguments={
+                'urdf_package': 'trike',
+                'urdf_package_path': PathJoinSubstitution(['urdf', 'ackerman.urdf'])
+            }.items()
         ),
 
         # TODO: Add back when done testing
