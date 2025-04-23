@@ -11,8 +11,8 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
 # Add executables
-add_executable(servo_controller src/servo_controller.cpp)
-add_executable(steering_controller src/steering_controller.cpp)
+add_executable(servo_controller src/embedded/servo_controller.cpp)
+add_executable(steering_controller src/embedded/steering_controller.cpp)
 
 # Link dependencies
 ament_target_dependencies(servo_controller rclcpp std_msgs)
@@ -33,6 +33,23 @@ install(TARGETS servo_controller steering_controller
   DESTINATION share/${PROJECT_NAME}/
 )
 
+install(DIRECTORY urdf
+  DESTINATION share/${PROJECT_NAME}
+  PATTERN "*.urdf"
+  PATTERN "*.xacro"
+)
+
+install(DIRECTORY param
+  DESTINATION share/${PROJECT_NAME}
+  PATTERN "*.yaml"
+)
+
+install(DIRECTORY map
+  DESTINATION share/${PROJECT_NAME}
+  # has yaml and png files
+  PATTERN "*.yaml"
+  PATTERN "*.png"
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
