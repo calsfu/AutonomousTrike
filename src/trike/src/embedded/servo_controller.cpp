@@ -45,7 +45,7 @@ private:
     rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr subscription_;
     boost::asio::io_service io_;
     boost::asio::serial_port serial_port_;
-    const std::string port = "/dev/ttyACM0";
+    const std::string port = "/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_95032303537351918032-if00";
 };
 
 int main(int argc, char *argv[]) {

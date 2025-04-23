@@ -12,6 +12,17 @@
 	EncoderA - Encoder channel A (pin 2, interrupt pin)
 	EncoderB - Encoder channel B (pin 3)
 */
+// Lights
+#define LEFT_LIGHT_PIN 5
+#define RIGHT_LIGHT_PIN 12
+
+enum STEERING_STATE {
+  STRAIGHT,
+  LEFT,
+  RIGHT
+};
+
+STEERING_STATE steering_state = STRAIGHT;
 
 // Motor driver pins:
 const int enA = 9;  	// PWM control for motor speed
@@ -27,8 +38,6 @@ const int MAX_PWM = 255;
 const int MIN_PWM = 50;     	 
 const int pulsesPerRevolution = 20;  // Adjust this based on your encoder
 
-
-
 // Encoder variables:
 volatile long encoderCount = 0;  	// Pulse counter
 volatile int encoderDirection = 0;   // 1 = forward, -1 = reverse
@@ -40,10 +49,17 @@ int serial_read_pwm = 0;
 unsigned long lastTime = 0;
 float rpm = 0;  // Stores calculated RPM
 
+// Tracking for turn signal output
+unsigned long lastTurnSignalTime = 0;
+unsigned long turnSignalDuration = 500; // Duration for turn signal in milliseconds
+bool turnSignalState = false;
+
 void setup() {
   pinMode(enA, OUTPUT);
   pinMode(in1, OUTPUT);
   pinMode(in2, OUTPUT);
+  pinMode(LEFT_LIGHT_PIN, OUTPUT);
+  pinMode(RIGHT_LIGHT_PIN, OUTPUT);
  
   pinMode(EncoderA, INPUT_PULLUP);
   pinMode(EncoderB, INPUT_PULLUP);
@@ -52,6 +68,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(EncoderA), encoderISR, RISING);
 
   lastTime = millis();
+  lastTurnSignalTime = millis();
 }
 
 void loop() {
@@ -66,17 +83,44 @@ void loop() {
 
 void run_motor(signed char serial_in) {
 	// Serial.print("serial_in: "); Serial.println(serial_in);
-
-    if (serial_in > 0 && encoderCount < 1500) {
-      int pwm_i = constrain(serial_in, MIN_PWM, MAX_PWM);
-      forwardMotor(pwm_i);
-    } else if (serial_in < 0 && encoderCount > -1500) {
-      int pwm_i = constrain(-serial_in, MIN_PWM, MAX_PWM);
-      reverseMotor(pwm_i);
-    } else {
-      stopMotor();
+  const unsigned long currentTime = millis();
+  if (serial_in < 0 && encoderCount < 1500) {
+    int pwm_i = constrain(serial_in, MIN_PWM, MAX_PWM);
+    forwardMotor(pwm_i);
+    steering_state = RIGHT;
+    lastTime = 0; // ensure it turns on instantly
+  } else if (serial_in > 0 && encoderCount > -1500) {
+    int pwm_i = constrain(-serial_in, MIN_PWM, MAX_PWM);
+    reverseMotor(pwm_i);
+    steering_state = LEFT;
+    lastTime = 0;
+  }
+  else {
+    stopMotor();
+    if(encoderCount > -200 && encoderCount < 200) {
+      steering_state = STRAIGHT;
     }
-    
+  }
+
+  // Update lights
+  if(currentTime - lastTurnSignalTime >= turnSignalDuration) {
+    turnSignalState = !turnSignalState; // Toggle turn signal state
+    lastTurnSignalTime = currentTime; // Update last time
+    switch (steering_state) {
+      case STRAIGHT:
+        digitalWrite(LEFT_LIGHT_PIN, LOW);
+        digitalWrite(RIGHT_LIGHT_PIN, LOW);
+        break;
+      case LEFT:
+        digitalWrite(LEFT_LIGHT_PIN, turnSignalState);
+        digitalWrite(RIGHT_LIGHT_PIN, LOW);
+        break;
+      case RIGHT:
+        digitalWrite(LEFT_LIGHT_PIN, LOW);
+        digitalWrite(RIGHT_LIGHT_PIN, turnSignalState);
+        break;
+    }
+  }
 }
 
 // Function to drive the motor forward
