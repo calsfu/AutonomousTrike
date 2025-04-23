@@ -1,6 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/int8.hpp"
+#include "trike/constants.hpp"
 #include <boost/asio.hpp>
 #include <string>
 #include <chrono>
@@ -13,8 +14,7 @@ public:
     {
         subscription_ = this->create_subscription<std_msgs::msg::Int8>(
             "control/brake", 10, std::bind(&ServoController::servo_callback, this, std::placeholders::_1)
-        );        
-        
+        );
         try {
             // open the serial port explicitly
             serial_port_.open(port); 

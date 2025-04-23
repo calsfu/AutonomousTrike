@@ -18,6 +18,10 @@ add_executable(steering_controller src/embedded/steering_controller.cpp)
 ament_target_dependencies(servo_controller rclcpp std_msgs)
 ament_target_dependencies(steering_controller rclcpp std_msgs)
 
+install(DIRECTORY include/
+  DESTINATION include
+)
+
 # Include directories
 foreach(target servo_controller steering_controller)
   target_include_directories(${target} PUBLIC
