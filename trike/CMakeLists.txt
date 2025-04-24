@@ -54,6 +54,8 @@ ament_python_install_package(
   PACKAGE_DIR src/audio
   PACKAGE_DIR src/navigation
   PACKAGE_DIR src/controller
+  PACKAGE_DIR src/perception
+  PACKAGE_DIR src/key_op
 )
 
 # Install Python scripts/executables
@@ -63,6 +65,9 @@ install(PROGRAMS
   src/navigation/image_segment.py
   src/controller/controller.py
   src/controller/mode_manager.py
+  src/perception/emergency_stop.py
+  src/key_op/key_op.py
+  src/key_op/key_op2.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
