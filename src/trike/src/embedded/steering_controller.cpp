@@ -12,7 +12,7 @@ public:
     SteeringController() : Node("steering_controller"), serial_port_(io_)
     {  
         subscription_ = this->create_subscription<std_msgs::msg::Int8>(
-            "control/steer", 10, std::bind(&SteeringController::steering_callback, this, std::placeholders::_1)
+            "control/steer/new", 10, std::bind(&SteeringController::steering_callback, this, std::placeholders::_1)
         );        
         audio_publisher_ = this->create_publisher<std_msgs::msg::Int8>("audio_command", 10);
 

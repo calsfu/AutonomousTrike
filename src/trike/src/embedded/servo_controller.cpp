@@ -13,7 +13,7 @@ public:
     ServoController() : Node("servo_controller"), serial_port_(io_)
     {
         subscription_ = this->create_subscription<std_msgs::msg::Int8>(
-            "control/brake", 10, std::bind(&ServoController::servo_callback, this, std::placeholders::_1)
+            "control/brake/new", 10, std::bind(&ServoController::servo_callback, this, std::placeholders::_1)
         );
         audio_publisher_ = this->create_publisher<std_msgs::msg::Int8>("audio_command", 10);
 
