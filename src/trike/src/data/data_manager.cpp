@@ -85,3 +85,10 @@ private:
     rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr steer_publisher_;
     int mode_ = trike::PARK;
 };
+
+int main(int argc, char *argv[]) {
+    rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared<DataManager>());
+    rclcpp::shutdown();
+    return 0;
+}

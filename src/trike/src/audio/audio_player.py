@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import rclpy
 import sounddevice as sd
 import os
@@ -73,3 +74,12 @@ class AudioPlayer(Node):
             self.get_logger().error(f"Error playing audio file {file_name}: {e}")
 
     
+def main(args=None):
+    rclpy.init(args=args)
+    audio_player = AudioPlayer()
+    rclpy.spin(audio_player)
+    audio_player.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
