@@ -13,8 +13,8 @@
 	EncoderB - Encoder channel B (pin 3)
 */
 // Lights
-#define LEFT_LIGHT_PIN 5
-#define RIGHT_LIGHT_PIN 12
+#define LEFT_LIGHT_PIN 12
+#define RIGHT_LIGHT_PIN 5
 
 enum STEERING_STATE {
   STRAIGHT,
@@ -88,19 +88,36 @@ void run_motor(signed char serial_in) {
     int pwm_i = constrain(serial_in, MIN_PWM, MAX_PWM);
     forwardMotor(pwm_i);
     steering_state = RIGHT;
+    // digitalWrite(RIGHT_LIGHT_PIN, turnSignalState);
+    // digitalWrite(LEFT_LIGHT_PIN, LOW);
     lastTime = 0; // ensure it turns on instantly
   } else if (serial_in > 0 && encoderCount > -1500) {
     int pwm_i = constrain(-serial_in, MIN_PWM, MAX_PWM);
     reverseMotor(pwm_i);
+    if(currentTime - lastTurnSignalTime >= turnSignalDuration) {
+      turnSignalState = !turnSignalState; // Toggle turn signal state
+      lastTurnSignalTime = currentTime; // Update last time
+    }
+    // digitalWrite(LEFT_LIGHT_PIN, turnSignalState);
+    // digitalWrite(RIGHT_LIGHT_PIN, LOW);
     steering_state = LEFT;
     lastTime = 0;
+  } else if(serial_in == 0) {
+    stopMotor();
   }
   else {
     stopMotor();
-    if(encoderCount > -200 && encoderCount < 200) {
-      steering_state = STRAIGHT;
-    }
   }
+
+  // Change state based on position
+  if(encoderCount > 150) {
+    steering_state = LEFT;
+  } else if(encoderCount < -150) {
+    steering_state = RIGHT;
+  } else {
+    steering_state = STRAIGHT;
+  }
+  
 
   // Update lights
   if(currentTime - lastTurnSignalTime >= turnSignalDuration) {

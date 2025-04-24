@@ -42,5 +42,5 @@ def generate_launch_description():
             name='emergency_brake_node',  # Name of the node (optional)
             output='screen',  # Output logs to the screen
             parameters=[]  # Add any parameters needed here
-        ),
+        )
     ])

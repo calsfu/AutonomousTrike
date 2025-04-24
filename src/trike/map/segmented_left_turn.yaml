@@ -6,3 +6,4 @@ occupied_thresh: 0.65
 free_thresh: 0.196
 
 # goal_point: [-15.5, 15.5, -1.5708]  # [x, y, yaw] Adjust these values based on where your map is located in the world
+

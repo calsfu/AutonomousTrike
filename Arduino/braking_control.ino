@@ -2,6 +2,7 @@
 #include <Adafruit_PWMServoDriver.h>
 
 #define BRAKE_LIGHT_PIN 9  // Digital pin connected to MOSFET gate
+#define HAPTIC_MOTOR_PIN 6
 
 // Create an instance of the PCA9685 driver
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
@@ -27,6 +28,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Initializing PCA9685 Servo Driver...");
   pinMode(BRAKE_LIGHT_PIN, OUTPUT);
+  pinMode(HAPTIC_MOTOR_PIN, OUTPUT);
 
   // Initialize PCA9685
   pwm.begin();
@@ -51,6 +53,7 @@ void loop() {
       setServoPosition(brakeServo2Channel, servo1BrakePosition); // Apply brake with Servo 2
       // Turn on lights
       digitalWrite(BRAKE_LIGHT_PIN, HIGH);  // Turn on lights
+      digitalWrite(HAPTIC_MOTOR_PIN, HIGH);  // Turn on lights
 
     } else {
       // Serial.println("Brake Released.");
@@ -58,6 +61,7 @@ void loop() {
       setServoPosition(brakeServo2Channel, servo1ReleasePosition); // Release brake with Servo 2
 
       digitalWrite(BRAKE_LIGHT_PIN, LOW);   // Turn off lights
+      digitalWrite(HAPTIC_MOTOR_PIN, LOW);  // Turn on lights
     }
   }
 

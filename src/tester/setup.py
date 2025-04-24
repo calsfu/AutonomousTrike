@@ -23,6 +23,7 @@ setup(
             'brake_command = tester.brake_command:main',
             'key_op = tester.key_op:main',
             'emergency_stop = tester.emergency_stop:main',
+            'key_op2 = tester.key_op2:main',
         ],
     },
 )
