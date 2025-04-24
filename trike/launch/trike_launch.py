@@ -16,5 +16,33 @@ def generate_launch_description():
             executable='steering_controller',
             name='steering_controller',
             output='screen'
-        )
+        ),
+        #audio
+        launch_ros.actions.Node(
+            package='trike', 
+            executable='audio_player.py',
+            name='audio_player',
+            output='screen'
+        ),
+        # emergency brake
+        launch_ros.actions.Node(
+            package='trike', 
+            executable='emergency_brake.py',
+            name='emergency_brake',
+            output='screen'
+        ),
+        # data manager
+        launch_ros.actions.Node(
+            package='trike', 
+            executable='data_manager',
+            name='data_manager',
+            output='screen'
+        ),
+        # mode manager
+        launch_ros.actions.Node(
+            package='trike', 
+            executable='mode_manager.py',
+            name='mode_manager',
+            output='screen'
+        ),
     ])

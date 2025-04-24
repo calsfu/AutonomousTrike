@@ -19,7 +19,7 @@ def generate_launch_description():
         'launch',
         'camera.launch.py'
     )
-
+    
     vector_nav_path = os.path.join(
         get_package_share_directory('vectornav'),
         'launch',
