@@ -2,9 +2,47 @@ import rclpy
 import sounddevice as sd
 import os
 import soundfile as sf
-from std_msgs.msg import String
+from std_msgs.msg import Int8
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
+from enum import Enum
+
+class AudioFile(Enum):
+    AUTONOMOUS_ON = 0
+    BRAKES_OFF = 1
+    BRAKES_ON = 2
+    DESTINATION_CONFIRMED = 3
+    DESTINATION_SET = 4
+    MANUAL_ON = 5
+    NEUTRAL_ON = 6
+    PARK_ON = 7
+    NO_GPS_SIGNAL = 8
+    ENTER_DESTINATION = 9
+    SYSTEM_READY = 10
+    TURNING_LEFT = 11
+    TURNING_RIGHT = 12
+    CONFIRM_DESTINATION = 13
+
+    _filename_map = {
+        AUTONOMOUS_ON: "autonomous_on.wav",
+        BRAKES_OFF: "brakes_off.wav",
+        BRAKES_ON: "brakes_on.wav",
+        DESTINATION_CONFIRMED: "destination_confirmed.wav",
+        DESTINATION_SET: "destination_set.wav",
+        MANUAL_ON: "manual_on.wav",
+        NEUTRAL_ON: "neutral_on.wav",
+        PARK_ON: "park_on.wav",
+        NO_GPS_SIGNAL: "no_gps_signal_found.wav",
+        ENTER_DESTINATION: "please_enter_a_destination.wav",
+        SYSTEM_READY: "system_ready.wav",
+        TURNING_LEFT: "turning_left.wav",
+        TURNING_RIGHT: "turning_right.wav",
+        CONFIRM_DESTINATION: "would_you_like_to_confirm_this_destination.wav",
+        NO_GPS_SIGNAL: "no_gps_signal_found.wav"
+    }
+
+    def filename(self):
+        return self._filename_map[self]
 
 class AudioPlayer(Node):
     def __init__(self):
@@ -13,44 +51,16 @@ class AudioPlayer(Node):
         if not os.path.exists(self.audio_dir):
             self.get_logger().error(f"Audio directory {self.audio_dir} does not exist.")
             return
-        self.create_subscription(String, 'audio_command', self.listener_callback, 10)
+        self.create_subscription(Int8, 'audio_command', self.listener_callback, 10)
         self.get_logger().info('Audio Player Initialized')
 
     def listener_callback(self, msg):
         command = msg.data
-        if command == 'system_ready':
-            self.play_audio('system_ready.wav')
-        elif command == 'left':
-            self.play_audio('turning_left.wav')
-        elif command == 'right':
-            self.play_audio('turning_right.wav')
-        elif command == 'brake_applied':
-            self.play_audio('brakes_on.wav')
-        elif command == 'brake_released':
-            self.play_audio('brakes_off.wav')
-        elif command == 'park':
-            self.play_audio('park_mode.wav')
-        elif command == 'neutral':
-            self.play_audio('neutral_mode.wav')
-        elif command == 'manual':
-            self.play_audio('manual_mode.wav')
-        elif command == 'autonomous':
-            self.play_audio('autonomous_mode.wav')
-        elif command == 'left':
-            self.play_audio('turning_left.wav')
-        elif command == 'enter_destination':
-            self.play_audio('please_enter_a_destination.wav')
-        elif command == 'destination_set':
-            self.play_audio('destination_set_to.wav')
-        elif command == 'would_you_like_to_confirm':
-            self.play_audio('would_you_like_to_confirm_this_destination.wav')
-        elif command == 'confirmed':
-            self.play_audio('destination_confirmed.wav')
-        elif command == 'no_gps':
-            self.play_audio('no_gps_signal_found.wav')
+        if command in AudioFile._value2member_map_:
+            audio_file = AudioFile(command).name + '.wav'
+            self.play_audio(audio_file)
         else:
-            self.get_logger().info(f"Unknown command: {command}")
-            return
+            self.get_logger().error(f"Invalid audio command: {command}")
 
     def play_audio(self, file_name):
         try:
