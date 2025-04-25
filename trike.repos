@@ -1,0 +1,15 @@
+repositories:
+  vectornav:
+    type: git
+    url: https://github.com/dawonn/vectornav.git
+    version: ros2
+
+  depthai-ros:
+    type: git
+    url: https://github.com/luxonis/depthai-ros.git
+    version: humble
+
+  unilidar_sdk:
+    type: git
+    url: https://github.com/unitreerobotics/unilidar_sdk.git
+    version: main

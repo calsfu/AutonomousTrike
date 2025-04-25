@@ -22,33 +22,35 @@ Ensure you have the following dependencies installed before running the project:
 - sudo apt install ros-humble-depthai-ros
 
 ## Installation
-1. Clone the repository:
+1. Create a ROS2 workspace:
 ```bash
-git clone
-cd autonomous_trike
+mkdir -p ~/trike_ws/src
+cd ~/trike_ws/src
 ```
-2. Install dependencies:
+2. Clone the repository:
 ```bash
-sudo apt install ros-humble-depthai-ros
+git clone https://github.com/calsfu/AutonomousTrike.git
 ```
-3. Build the project:
+3. Clone external packages
 ```bash
+vcs import . < AutonomousTrike/trike.repos 
+```
+4. Build the project:
+```bash
+cd ~/trike_ws
 colcon build
 ```
-4. Source the workspace:
+5. Source the workspace:
 ```bash
 source install/setup.bash
 ```
-5. Connect the Jetson Orin Nano to the Arduino for motor control.
-6. Connect the stereo cameras to the Jetson Orin Nano.
-7. Launch the system:
+6. Launch the system:
 ```bash
 ros2 launch trike main_launch.py
-
 ```
 
 ### Testing
-Indivual components can be run using the following commands
+Individual components can be run using the following commands
 
 - Oak-D camera
 ```bash
