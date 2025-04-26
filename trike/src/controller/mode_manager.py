@@ -1,24 +1,54 @@
+#!/usr/bin/env python
 import rclpy
 import Jetson.GPIO as GPIO
 from rclpy.node import Node
-from std_msgs.msg import Int16
+from std_msgs.msg import Int8
 
 PARK = 0
 NEUTRAL = 1
 MANUAL = 2
 AUTONOMOUS = 3
 
+# TODO: Put audio comands in a shared file
+AUTONOMOUS_ON = 0
+BRAKES_OFF = 1
+BRAKES_ON = 2
+DESTINATION_CONFIRMED = 3
+DESTINATION_SET = 4
+MANUAL_ON = 5
+NEUTRAL_ON = 6
+PARK_ON = 7
+NO_GPS_SIGNAL = 8
+ENTER_DESTINATION = 9
+SYSTEM_READY = 10
+TURNING_LEFT = 11
+TURNING_RIGHT = 12
+CONFIRM_DESTINATION = 13
+
 class ModeManager(Node):
     def __init__(self):
         super().__init__('mode_manager')
-        self.mode_publisher = self.create_publisher(Int16, 'mode', 10)
+        self.mode_publisher = self.create_publisher(Int8, 'mode', 10)
+        self.audio_publisher = self.create_publisher(Int8, 'audio_command', 10)
+        self.int_to_mode = {
+            PARK: 'Park',
+            NEUTRAL: 'Neutral',
+            MANUAL: 'Manual',
+            AUTONOMOUS: 'Autonomous'
+        }
+        self.int_to_audio = {
+            PARK: PARK_ON,
+            NEUTRAL: NEUTRAL_ON,
+            MANUAL: MANUAL_ON,
+            AUTONOMOUS: AUTONOMOUS_ON
+        }
         self.mode = PARK
         self.neutral_pin = 7
         self.manual_pin = 33
         self.autonomous_pin = 31
         self.setup_gpio()
         self.create_timer(0.1, self.check_mode)
-        self.mode_publisher.publish(Int16(data=self.mode))
+        self.mode_publisher.publish(Int8(data=self.mode))
         self.get_logger().info('Mode Manager Initialized')
 
     def setup_gpio(self):
@@ -36,24 +66,28 @@ class ModeManager(Node):
             self.set_mode(AUTONOMOUS)
         else:
             self.set_mode(PARK)
-        self.get_logger().info(f'Mode: {self.mode.name}')
+        self.get_logger().info(f'Mode: {self.mode}')
 
     def set_mode(self, mode):
         if mode == self.mode: # Just in case
             return
         self.mode = mode
-        msg = Int16()
+        msg = Int8()
         msg.data = self.mode
         self.mode_publisher.publish(msg)
-        if self.mode == PARK:
-            self.get_logger().info('Park Mode')
-        elif self.mode == NEUTRAL:
-            self.get_logger().info('Neutral Mode')
-        elif self.mode == MANUAL:
-            self.get_logger().info('Manual Mode')
-        elif self.mode == AUTONOMOUS:
-            self.get_logger().info('Autonomous Mode')
+        self.get_logger().info(f'{self.int_to_mode[self.mode]}')
+        audio_msg = Int8()
+        audio_msg.data = self.int_to_audio[self.mode]
+        self.audio_publisher.publish(audio_msg)
         
             
+def main(args=None):
+    rclpy.init(args=args)
+    mode_manager = ModeManager()
+    rclpy.spin(mode_manager)
+    mode_manager.destroy_node()
+    rclpy.shutdown()
+    GPIO.cleanup()
 
-    
+if __name__ == '__main__':
+    main()
