@@ -27,8 +27,8 @@ def generate_launch_description():
         # emergency brake
         launch_ros.actions.Node(
             package='trike', 
-            executable='emergency_brake.py',
-            name='emergency_brake',
+            executable='emergency_stop.py',
+            name='emergency_stop',
             output='screen'
         ),
         # data manager

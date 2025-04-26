@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import rclpy
 from geometry_msgs.msg import PointStamped, Twist
 from rclpy.node import Node

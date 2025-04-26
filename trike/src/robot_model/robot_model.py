@@ -4,8 +4,7 @@
 
 import numpy as np
 import math
-
-from me416_utilities import stamp_difference
+from rclpy.time import Time
 
 def model_parameters():
     """Returns two constant model parameters"""
@@ -150,10 +149,25 @@ class StampedMsgRegister():
         '''
         time_delay = None
         if self.msg_previous is not None:
-            time_delay = stamp_difference(msg.header.stamp, self.msg_previous.header.stamp)
+            time_delay = self.stamp_difference(msg.header.stamp, self.msg_previous.header.stamp)
         temp_msg = self.msg_previous
         self.msg_previous = msg
         return time_delay, temp_msg
+    
+    def stamp_difference(self, msg_new, msg_previous):
+        '''
+        Computes time difference between two messages
+        INPUTS:
+            msg_new : message
+            msg_previous : message
+        OUTPUTS:
+            time_difference : float
+        '''
+        time1 = Time.from_msg(msg_previous)
+        time2 = Time.from_msg(msg_new)
+        duration = time2 - time1
+        return duration.nanoseconds / 1e9
+    
     def previous_stamp(self):
         '''
         Returns time stamp of previous msg
