@@ -20,7 +20,7 @@ class ImagePublisher(Node):
     '''
     def __init__(self):
         super().__init__('image_segment')
-        self.create_subscription(Image, '/image_raw', self.camera_callback, 1)
+        self.create_subscription(Image, '/oak/rgb/image_raw', self.camera_callback, 1)
         self.pub_image = self.create_publisher(Image, '/image/segmented', 10)
         self.pub_centroid = self.create_publisher(PointStamped,
                                                   '/image/centroid', 10)
