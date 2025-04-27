@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project controls an **autonomous trike** equipped with GPS, cameras, and obstacle sensors. The trike uses global navigation (GPS) combined with local obstacle avoidance for safe outdoor navigation without pre-built maps.
+This project controls an **autonomous trike** equipped with GPS, cameras, and obstacle sensors. The trike uses global navigation (GPS) combined with local obstacle avoidance for outdoor navigation without pre-built maps.
 
 ### How ROS2 Works in This Project
 
@@ -22,8 +22,7 @@ The `trike` package is the central ROS2 package that organizes all software comp
 - **include/trike/**: C++ header files, such as `constants.hpp`, used across modules.
 - **launch/**: ROS2 launch files for bringing up different parts of the system (main system, robot description, teleoperation, etc.).
 - **map/**: Static map images and routing overlays for navigation planning.
-- **mapssegmented_by_gray.png**: Segmented version of a map used for pathfinding or testing.
-- **msg/**: Placeholder directory for custom ROS2 messages (currently contains README).
+- **msg/**: Directory for custom ROS2 messages
 - **package.xml**: ROS2 package manifest describing dependencies and metadata.
 - **param/**: YAML configuration files for node parameters (e.g., `trike.yaml` for system-wide settings).
 - **scripts/**: Helper Python scripts like `segment_map.py` for map preparation.
@@ -39,7 +38,7 @@ The `trike` package is the central ROS2 package that organizes all software comp
   - **perception/**: Obstacle detection and emergency stop logic.
   - **robot_model/**: Python code for maintaining an internal kinematic model of the trike.
   - **util/**: Miscellaneous helper scripts and tools.
-- **srv/**: Placeholder directory for custom ROS2 services (currently contains README).
+- **srv/**: Directory for custom ROS2 services
 - **test/**: Test scripts, including hardware tests, simulation demos (Carla), and trajectory planning.
 - **urdf/**: Robot model files in URDF and XACRO format for simulation and visualization (RViz, Gazebo).
 
@@ -47,19 +46,18 @@ The `trike` package is the central ROS2 package that organizes all software comp
 
 Each folder is structured to keep functionality modular and allow easier maintenance and scalability as the system grows.
 
-## Node Descriptions
-
+## Internal Node Descriptions
+Inside the trike package, the following nodes are used by our system. 
 | Node | Description |
 |:-----|:------------|
-| `servo_controller` | Controls the steering and motor speed via commands received from the navigation and obstacle avoidance systems. |
-| `steering_controller` | Adjusts the steering angle of the trike, interpreting signals from the servo and navigation modules. |
-| `data_manager` | Handles the collection and management of sensor data, storing or processing information for navigation and diagnostics. |
-| `audio_player` | Plays pre-recorded audio feedback based on the system's state or mode, such as turning or emergency stops. |
-| `controller_line` | Responsible for controlling the movement of the trike along a designated line, likely used in lane-following scenarios. |
-| `image_segment` | Processes images for segmentation to detect road lanes, obstacles, or other relevant features in the environment. |
-| `controller` | Main controller that coordinates the movement and decision-making between the navigation, perception, and control systems. |
-| `mode_manager` | Manages the various operational modes of the trike (e.g., manual, autonomous, emergency stop). |
-| `emergency_stop` | Monitors for critical faults or collision risks and triggers an immediate stop to ensure safety. |
+| `servo_controller` | Controls the braking motor via commands received from the navigation systems. |
+| `steering_controller` | Adjusts the steering angle of the trike, interpreting signals from the navigation modules. |
+| `data_manager` | Handles the collection and management of sensor data, relaying data based on the current mode of the trike|
+| `audio_player` | Plays pre-recorded audio feedback based on the system's state or mode, such as turning or stops. |
+| `controller_line` | Responsible for controlling the yaw of the trike along a designated line. |
+| `image_segment` | Processes images for segmentation to detect road lanes in the environment. |
+| `mode_manager` | Manages the various operational modes of the trike (e.g., manual, autonomous, park). |
+| `emergency_stop` | Monitors for collision risks and triggers an immediate stop. |
 | `key_op` | Handles key press operations, possibly for manual control or mode switching via keyboard input. |
 
 ## Basic Control Flow
@@ -104,7 +102,7 @@ The `main_launch.py` file is a higher-level launch file that brings up both the 
 
 Key external nodes launched by `main_launch.py`:
 - **depthai camera.launch.py** – Handles camera input and image processing for dynamic obstacle detection and lane following.
-- **vectornav.launch.py** – Interfaces with the VectorNav IMU to enhance the trike’s localization and provide inertial data for navigation.
+- **vectornav vectornav.launch.py** – Interfaces with the VectorNav IMU to enhance the trike’s localization and provide inertial data for navigation.
 
 By launching `main_launch.py`, the system is able to bring up both internal and external components, ensuring the complete trike software stack is running.
 
@@ -116,7 +114,7 @@ These launch files streamline the process of starting up the autonomous trike by
 
 ### How Building Works in ROS2
 
-ROS2 uses a modern build system based around **CMake** and **ament** to manage and compile code. Each part of the robot software (called a **package**) has its own directory, `package.xml`, and `CMakeLists.txt`. 
+ROS2 uses a build system based around **CMake** and **ament** to manage and compile code. Each part of the robot software (called a **package**) has its own directory, `package.xml`, and `CMakeLists.txt`. 
 
 The entire workspace is built using **colcon**, which finds all packages automatically and builds them in the correct order based on dependencies. This system allows easy modular development and cross-compilation for different platforms.
 
@@ -146,7 +144,7 @@ source install/setup.bash
 | C++ Compiler | GCC 11.3 |
 | CMake | 3.22.1 |
 | Arduino IDE | 2.2.1 |
-| Jetson Orin Nano Libraries | JetPack 6.0 DP |
+| Jetson Orin Nano Libraries | JetPack 6.2 DP |
 
 CUDA and TensorRT are installed but **optional** (used for accelerated vision inference if enabled).
 
@@ -182,7 +180,13 @@ cd ~/trike_ws/src
 
 Clone the project repository:
 ```bash
-git clone https://github.com/your-username/autonomous-trike.git
+git clone https://github.com/coler/autonomous-trike.git
+```
+
+Clone external packages
+```bash
+cd ..
+vcs import . < AutonomousTrike/trike.repos 
 ```
 
 Go back to the workspace root:
@@ -214,10 +218,13 @@ source install/setup.bash
 Install **Arduino IDE 2.2.1** from the [official Arduino website](https://www.arduino.cc/en/software).
 
 ### Step 2: Flash Arduino Code
-1. Connect the Arduino to the host computer via USB.
-2. Open `arduino_sketches/trike_controller.ino`.
+1. Connect the braking Arduino to the host computer via USB.
+2. Open `arduino/braking_controller.ino`.
 3. Upload the sketch to the Arduino.
-4. Arduino listens over serial for velocity and steering commands sent from ROS2.
+4. Connect the steering Arduino to the host computer via USB.
+5. Open `arduino/steering_controller.ino`.
+6. Upload the sketch to the Arduino.
+7. Arduino listens over serial for velocity and steering commands sent from ROS2.
 
 ---
 
