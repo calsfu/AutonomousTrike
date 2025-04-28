@@ -48,17 +48,19 @@ Each folder is structured to keep functionality modular and allow easier mainten
 
 ## Internal Node Descriptions
 Inside the trike package, the following nodes are used by our system. 
-| Node | Description |
-|:-----|:------------|
-| `servo_controller` | Controls the braking motor via commands received from the navigation systems. |
-| `steering_controller` | Adjusts the steering angle of the trike, interpreting signals from the navigation modules. |
-| `data_manager` | Handles the collection and management of sensor data, relaying data based on the current mode of the trike|
-| `audio_player` | Plays pre-recorded audio feedback based on the system's state or mode, such as turning or stops. |
-| `controller_line` | Responsible for controlling the yaw of the trike along a designated line. |
-| `image_segment` | Processes images for segmentation to detect road lanes in the environment. |
-| `mode_manager` | Manages the various operational modes of the trike (e.g., manual, autonomous, park). |
-| `emergency_stop` | Monitors for collision risks and triggers an immediate stop. |
-| `key_op` | Handles key press operations, possibly for manual control or mode switching via keyboard input. |
+| Node | Description | Publishes To | Subscribes To |
+|:-----|:------------|:-------------|:--------------|
+| `servo_controller` | Controls the braking motor via commands received from the navigation systems. |/audio_command | /control/brake/new |
+| `steering_controller` | Adjusts the steering angle of the trike, interpreting signals from the navigation modules. | /audio_commands | /control/steer/new/ |
+| `data_manager` | Handles the collection and management of sensor data, relaying data based on the current mode of the trike. | /control/brake/new, /control/steer/new | /mode |
+| `audio_player` | Plays pre-recorded audio feedback based on the system's state or mode, such as turning or stops. | | /audio_command |
+| `controller_line` | Responsible for controlling the yaw of the trike along a designated line. | /robot_twist, /control_error | /image/centroid |
+| `image_segment` | Processes images for segmentation to detect road lanes in the environment. | /image/segmented, /image/centroid | /oak/rgb/image_raw |
+| `mode_manager` | Manages the various operational modes of the trike (e.g., manual, autonomous, park). | /mode, /audio_command | |
+| `emergency_stop` | Monitors for collision risks and triggers an immediate stop. | /control/brake | /oak/stereo/image_raw |
+| `key_op` | Handles key press operations, possibly for manual control or mode switching via keyboard input. | /control/brake, /control/steer |  |
+
+![image](https://github.com/user-attachments/assets/e0f41043-4091-4d5f-80f7-3272134819c2)
 
 ## Basic Control Flow
 
