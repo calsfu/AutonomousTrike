@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ A first template for a PID controller """
 
 

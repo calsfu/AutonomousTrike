@@ -11,22 +11,26 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 # Define the list of C++ executable targets
 set(CPP_TARGET_NAMES
   servo_controller
   steering_controller
   data_manager
+  twist_to_steer
 )
 
 # Add executables
 add_executable(servo_controller src/embedded/servo_controller.cpp)
 add_executable(steering_controller src/embedded/steering_controller.cpp)
 add_executable(data_manager src/data/data_manager.cpp)
+add_executable(twist_to_steer src/data/twist_to_steer.cpp)
+
 
 # Apply common properties in a loop
 foreach(target IN LISTS CPP_TARGET_NAMES)
-  ament_target_dependencies(${target} rclcpp std_msgs)
+  ament_target_dependencies(${target} rclcpp std_msgs geometry_msgs)
 
   target_include_directories(${target} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -62,10 +66,11 @@ ament_python_install_package(
 install(PROGRAMS
   src/audio/audio_player.py
   src/navigation/controller_line.py
-  src/navigation/image_segment.py
   src/controller/controller.py
   src/controller/mode_manager.py
+  src/controller/controller_line.py
   src/perception/emergency_stop.py
+  src/perception/image_segment.py
   src/key_op/key_op.py
   src/key_op/key_op2.py
   DESTINATION lib/${PROJECT_NAME}

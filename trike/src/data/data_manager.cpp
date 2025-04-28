@@ -15,7 +15,7 @@ public:
             "control/steer", 10, std::bind(&DataManager::steer_callback, this, std::placeholders::_1)
         );
         mode_subscription_ = this->create_subscription<std_msgs::msg::Int8>(
-            "control/mode", 10, std::bind(&DataManager::mode_callback, this, std::placeholders::_1)
+            "mode", 10, std::bind(&DataManager::mode_callback, this, std::placeholders::_1)
         );
         brake_publisher_ = this->create_publisher<std_msgs::msg::Int8>("control/brake/new", 10);
         steer_publisher_ = this->create_publisher<std_msgs::msg::Int8>("control/steer/new", 10);
@@ -73,6 +73,19 @@ private:
 
     void mode_callback(const std_msgs::msg::Int8::SharedPtr msg) {
         mode_ = msg->data;
+        auto new_message = std_msgs::msg::Int8();
+        switch (mode_) {
+            case trike::PARK:
+                // Switch to brake
+                new_message.data = 1;
+                brake_publisher_->publish(new_message);
+                break;
+            default:
+                // unbrake
+                new_message.data = 0;
+                steer_publisher_->publish(new_message);
+                break;
+        }
     }
 
     // Subscriptions
