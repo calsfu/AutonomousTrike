@@ -1,0 +1,9 @@
+image: segmented_left_turn.png
+resolution: 0.05  # [meters/pixel] Adjust this value based on your map's scale
+origin: [-19.5, -10.0, 0.0]  # [x, y, yaw] Adjust these values based on where your map is located in the world
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+
+# goal_point: [-15.5, 15.5, -1.5708]  # [x, y, yaw] Adjust these values based on where your map is located in the world
+
