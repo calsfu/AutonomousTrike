@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
@@ -6,7 +7,7 @@ import sounddevice as sd
 import vosk
 import json
 import queue
-import RPi.GPIO as GPIO
+import Jetson.GPIO as GPIO
 import pyttsx3
 import time
 
