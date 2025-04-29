@@ -65,6 +65,7 @@ ament_python_install_package(
 # Install Python scripts/executables
 install(PROGRAMS
   src/audio/audio_player.py
+  src/audio/speech_to_text.py
   src/navigation/controller_line.py
   src/controller/controller.py
   src/controller/mode_manager.py
