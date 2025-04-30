@@ -1,0 +1,1 @@
+sudo docker run -v /home/linden/Desktop/SCA:/home/SCA -v /dev/bus/usb:/dev/bus/usb --device-cgroup-rule='c 189:* rmw' --runtime nvidia -it --rm --network=host dustynv/l4t-pytorch:autonomous1
