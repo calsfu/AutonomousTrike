@@ -19,7 +19,8 @@ bottom_idxs_for_ground: 10
 least_squares_outlier_stds: 2
 # emergency_brake tuning
 noise_thresh: 1000
-kblur: 20
-safe_cm: 3000
+kblur: 19
 boxes: 6
 box_ring: 1 # can't be > boxes / 2
+
+safe_cm: 3000
