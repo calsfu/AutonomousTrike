@@ -325,7 +325,7 @@ def run(sca, server_connection):
         steering_queue = multiprocessing.Queue()
         braking_queue = multiprocessing.Queue()
         still_running_queue = multiprocessing.Queue()
-        on_or_off = multiprocessing.Value('i', 1)
+        on_or_off = multiprocessing.Value('i', 0)
         steering_on = multiprocessing.Value('i', 0)
 
         p1 = multiprocessing.Process(target=oakd, args=(rgbd_queue, bad_depth_queue, rgb_shared_mem, depth_shared_mem, bad_depth_shared_mem, still_running_queue, on_or_off,))
