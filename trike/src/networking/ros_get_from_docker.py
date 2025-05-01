@@ -35,22 +35,22 @@ class get_from_docker(Node):
             s.listen()
             conn, addr = s.accept()
             with conn:
-                print(f"Connected by {addr}")
+                # print(f"Connected by {addr}")
                 while True:
                     data = conn.recv(1024).decode()
                     if not data:
                         continue
-                    print(data)
+                    # print(data)
                     if "s" in data:
                         steer = int(data.split("s")[1])
                         c = angles_dict[steer]
-                        print("steer: " + c)
+                        # print("steer: " + c)
                         msg = Char()
                         msg.data = ord(c)
                         self._steer.publish(msg)
                     elif "b" in data:
                         brake = int(data.split("b")[1])
-                        print("brake: " + str(brake))
+                        # print("brake: " + str(brake))
                         msg = Int8()
                         msg.data = brake
                         self._brake.publish(msg)

@@ -13,34 +13,17 @@ def generate_launch_description():
         'trike_launch.py'
     )
 
-    # camera launch file
-    camera_launch_path = os.path.join(
-        get_package_share_directory('depthai_ros_driver'),
-        'launch',
-        'camera.launch.py'
-    )
-    
-    vector_nav_path = os.path.join(
-        get_package_share_directory('vectornav'),
-        'launch',
-        'vectornav.launch.py'
-    )
+    # vector_nav_path = os.path.join(
+    #     get_package_share_directory('vectornav'),
+    #     'launch',
+    #     'vectornav.launch.py'
+    # )
 
     return launch.LaunchDescription([
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(trike_launch_path)
         ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(camera_launch_path)
-        ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(vector_nav_path)
-        ),
-        Node(
-            package='tester',  # The package name
-            executable='emergency_stop',  # The executable to run
-            name='emergency_brake_node',  # Name of the node (optional)
-            output='screen',  # Output logs to the screen
-            parameters=[]  # Add any parameters needed here
-        ),
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(vector_nav_path)
+        # ),
     ])

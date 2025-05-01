@@ -20,10 +20,10 @@ class send_into_docker(Node):
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.connect((HOST, PORT))
                     if msg.data == 3:
-                        print("turning on")
+                        # print("turning on")
                         s.sendall("1".encode())
                     else:
-                        print("turning off")
+                        # print("turning off")
                         s.sendall("0".encode())
                 break
             except:

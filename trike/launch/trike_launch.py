@@ -24,13 +24,6 @@ def generate_launch_description():
             name='audio_player',
             output='screen'
         ),
-        # emergency brake
-        launch_ros.actions.Node(
-            package='trike', 
-            executable='emergency_stop.py',
-            name='emergency_stop',
-            output='screen'
-        ),
         # data manager
         launch_ros.actions.Node(
             package='trike', 
@@ -50,6 +43,24 @@ def generate_launch_description():
             package='trike', 
             executable='speech_to_text.py',
             name='speech_to_text',
+            output='screen'
+        ),
+        launch_ros.actions.Node(
+            package='trike', 
+            executable='ros_get_from_docker.py',
+            name='ros_get_from_docker',
+            output='screen'
+        ),
+        launch_ros.actions.Node(
+            package='trike', 
+            executable='ros_send_into_docker.py',
+            name='ros_send_into_docker',
+            output='screen'
+        ),
+        launch_ros.actions.Node(
+            package='trike', 
+            executable='key_op2.py',
+            name='key_op2',
             output='screen'
         ),
     ])

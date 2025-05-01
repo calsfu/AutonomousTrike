@@ -10,7 +10,7 @@ class RawKeyboardNode(Node):
 		super().__init__('raw_keyboard_listener')
 		self.brake_publisher_ = self.create_publisher(Int8, 'control/brake', 10)  # publisher for braking
 		self.steer_publisher_ = self.create_publisher(Char, 'control/steer', 10) # publisher for steering
-		self.dev_path = '/dev/input/by-id/usb-LiteOn_Lenovo_Traditional_USB_Keyboard-event-kbd'
+		self.dev_path = '/dev/input/by-id/usb-SayoDevice_SayoDevice_5K2U_0035BCA4FD02-event-kbd'
 		self.dev = None
 		self.last_steer = 0
 		self.last_brake = 0
@@ -45,7 +45,7 @@ class RawKeyboardNode(Node):
 					# steer_msg = Float32()
 					# steer_msg.data = 0.0
 
-					steer_msg = Int8()
+					steer_msg = Char()
 					steer_msg.data = self.last_steer
 
 					# check for quit
