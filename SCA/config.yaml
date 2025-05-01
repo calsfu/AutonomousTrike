@@ -6,7 +6,7 @@ min_object_area: .002 # 1000 / 540 * 960
 seconds_into_future: 3
 length_front_to_back_wheels: 2.5 # distance from front to back wheels
 max_steering_angle: 15 #30
-angle_samples: 3 #51
+angle_samples: 11
 safe_distance: .5
 too_far_to_care: 20 #8.45
 object_overlap_percent: .8
