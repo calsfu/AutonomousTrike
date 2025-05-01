@@ -1,1 +1,10 @@
-sudo docker run -v /home/linden/Desktop/SCA:/home/SCA -v /dev/bus/usb:/dev/bus/usb --device-cgroup-rule='c 189:* rmw' --runtime nvidia -it --rm --network=host dustynv/l4t-pytorch:autonomous1
+docker run -v /home/coler/Desktop/SCA:/home/SCA -v /dev/bus/usb:/dev/bus/usb --device-cgroup-rule='c 189:* rmw' --runtime nvidia -it --rm --network=host dustynv/l4t-pytorch:autonomous1
+
+cd ~/trike_ws
+colcon build --packages-select trike
+source install/setup.bash
+ros2 run trike ros_send_into_docker.py
+ros2 run trike ros_get_from_docker.py
+ros2 topic pub /mode std_msgs/msg/Int8 '{data: 3}'
+ros2 topic echo /control/brake
+ros2 topic echo /control/steer
