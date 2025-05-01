@@ -30,7 +30,7 @@ class get_from_docker(Node):
         self._steer = self.create_publisher(
             Char, '/control/steer', 10)
         
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.SO_REUSEADDR) as s:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((HOST, PORT))
             s.listen()
             conn, addr = s.accept()
