@@ -557,20 +557,16 @@ class Debug_Timer:
         cls.on = False
 
 class Config:
-    c = None
     d = {}
 
     @classmethod
     def load(cls, name):
         with open(name + ".yaml") as f:
-            cls.c = yaml.load(f, Loader=yaml.FullLoader)
+            c = yaml.load(f, Loader=yaml.FullLoader)
+            for name in c.keys():
+                cls.d[name] = c[name]
 
     @classmethod
     def get(cls, name):
         if name in cls.d:
             return cls.d[name]
-        return cls.c[name]
-    
-    @classmethod
-    def define(cls, name, value):
-        cls.d[name] = value
