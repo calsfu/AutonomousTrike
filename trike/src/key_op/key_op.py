@@ -111,6 +111,10 @@ class KeyOp(Node):
             steer_msg.data = ord('l')
         elif(key == 'd'):
             steer_msg.data = ord('d')
+        elif(key == 'f'):
+            steer_msg.data = ord('f')
+        elif(key == 'g'):
+            steer_msg.data = ord('g')
 
         self.last_steer = steer_msg.data
         self.last_brake = brake_msg.data

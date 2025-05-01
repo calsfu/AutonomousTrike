@@ -58,7 +58,7 @@ private:
                 break;
             case trike::NEUTRAL:
                 // Always publish 0 when in NEUTRAL mode
-                new_message.data = 'k';
+                new_message.data = 'f';
                 steer_publisher_->publish(new_message);
                 break;
             case trike::MANUAL:

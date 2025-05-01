@@ -75,6 +75,10 @@ class RawKeyboardNode(Node):
 						steer_msg.data = ord('l')
 					elif(key == 'KEY_D'):
 						steer_msg.data = ord('d')
+					elif(key == 'KEY_F'):
+						steer_msg.data = ord('f')
+					elif(key == 'KEY_G'):
+						steer_msg.data = ord('g')
 
 					self.last_steer = steer_msg.data
 					self.last_brake = brake_msg.data
