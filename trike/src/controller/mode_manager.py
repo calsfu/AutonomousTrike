@@ -66,7 +66,7 @@ class ModeManager(Node):
             self.set_mode(AUTONOMOUS)
         else:
             self.set_mode(PARK)
-        self.get_logger().info(f'Mode: {self.mode}')
+        # self.get_logger().info(f'Mode: {self.mode}')
 
     def set_mode(self, mode):
         if mode == self.mode: # Just in case

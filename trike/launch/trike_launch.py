@@ -45,4 +45,11 @@ def generate_launch_description():
             name='mode_manager',
             output='screen'
         ),
+        # speech to text
+        launch_ros.actions.Node(
+            package='trike', 
+            executable='speech_to_text.py',
+            name='speech_to_text',
+            output='screen'
+        ),
     ])

@@ -60,11 +60,13 @@ ament_python_install_package(
   PACKAGE_DIR src/controller
   PACKAGE_DIR src/perception
   PACKAGE_DIR src/key_op
+  PACKAGE_DIR src/networking
 )
 
 # Install Python scripts/executables
 install(PROGRAMS
   src/audio/audio_player.py
+  src/audio/speech_to_text.py
   src/navigation/controller_line.py
   src/controller/controller.py
   src/controller/mode_manager.py
@@ -73,6 +75,8 @@ install(PROGRAMS
   src/perception/image_segment.py
   src/key_op/key_op.py
   src/key_op/key_op2.py
+  src/networking/ros_get_from_docker.py
+  src/networking/ros_send_into_docker.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
