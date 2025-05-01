@@ -17,8 +17,9 @@ def timeit(func):
     return wrapper
 
 class Segmentation_Collision_Avoidance:
-    def __init__(self, config):
+    def __init__(self, config, show):
         Config.load(config)
+        self.show = show
         self.window = Window()
     
     def plot(self):
@@ -107,7 +108,7 @@ class Segmentation_Collision_Avoidance:
         plt.xlim(-xdim,xdim)
         ydim = xdim / height * width
         plt.ylim(0,2 * ydim)
-        plt.legend(handles=[for_legend], loc='upper center')#, prop={'size': 15})
+        # plt.legend(handles=[for_legend], loc='upper center')#, prop={'size': 15})
         plt.tight_layout()
         return fig
 
@@ -168,12 +169,13 @@ class Window:
             possible_angles = angle_steps[self.arcs == np.max(self.arcs)]
         best_difference = max_angle * 2
         best_angle = max_angle * 2
-        for angle in possible_angles:
+        for idx, angle in enumerate(possible_angles):
             dif = abs(self.preferred_steering_angle - angle)
             if dif < best_difference:
                 best_difference = dif
                 best_angle = angle
-        return best_angle
+                best_idx = idx
+        return best_idx
 
     @timeit
     def get_arcs_fit_lines(self):
@@ -273,7 +275,7 @@ class Window:
         
     # @timeit
     def arc_length(self, circle, point):
-        rad = -np.atan((point[1] - circle[1]) / (point[0] - circle[0]))
+        rad = -math.atan((point[1] - circle[1]) / (point[0] - circle[0]))
         xdel = point[0] - circle[0] >= 0
         ydel = point[1] - circle[1] >= 0
         if circle[0] > 0:
