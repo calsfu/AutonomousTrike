@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int8, Float32
+from std_msgs.msg import Int8, Float32, Char
 from evdev import InputDevice, categorize, ecodes
 import sys
 
@@ -9,7 +9,7 @@ class RawKeyboardNode(Node):
 	def __init__(self):
 		super().__init__('raw_keyboard_listener')
 		self.brake_publisher_ = self.create_publisher(Int8, 'control/brake', 10)  # publisher for braking
-		self.steer_publisher_ = self.create_publisher(Int8, 'control/steer', 10) # publisher for steering
+		self.steer_publisher_ = self.create_publisher(Char, 'control/steer', 10) # publisher for steering
 		self.dev_path = '/dev/input/by-id/usb-LiteOn_Lenovo_Traditional_USB_Keyboard-event-kbd'
 		self.dev = None
 		self.last_steer = 0
@@ -68,11 +68,13 @@ class RawKeyboardNode(Node):
 
 					# j for left, k for straight, l for right
 					if(key == 'KEY_J'):
-						steer_msg.data = -1
+						steer_msg.data = ord('j')
 					elif(key == 'KEY_K'):
-						steer_msg.data = 0
+						steer_msg.data = ord('k')
 					elif(key == 'KEY_L'):
-						steer_msg.data = 1
+						steer_msg.data = ord('l')
+					elif(key == 'KEY_D'):
+						steer_msg.data = ord('d')
 
 					self.last_steer = steer_msg.data
 					self.last_brake = brake_msg.data

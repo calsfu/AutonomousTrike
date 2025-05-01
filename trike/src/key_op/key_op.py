@@ -5,7 +5,7 @@ import tty
 import termios
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int8, Float32
+from std_msgs.msg import Int8, Float32, Char
 
 class _Getch(object):
     """Gets a single character from standard input.  Does not echo to the
@@ -58,7 +58,7 @@ class KeyOp(Node):
         '''
         super().__init__('key_op')  # Node name
         self.brake_publisher_ = self.create_publisher(Int8, 'control/brake', 10)  # publisher for braking
-        self.steer_publisher_ = self.create_publisher(Int8, 'control/steer', 10) # publisher for steering
+        self.steer_publisher_ = self.create_publisher(Char, 'control/steer', 10) # publisher for steering
         self.timer_ = self.create_timer(
             1. / 20,  # Check keys at 50Hz
             self.timer_callback)
@@ -104,11 +104,13 @@ class KeyOp(Node):
 
         # j for left, k for straight, l for right
         if(key == 'j'):
-            steer_msg.data = -1
+            steer_msg.data = ord('j')
         elif(key == 'k'):
-            steer_msg.data = 0
+            steer_msg.data = ord('k')
         elif(key == 'l'):
-            steer_msg.data = 1
+            steer_msg.data = ord('l')
+        elif(key == 'd'):
+            steer_msg.data = ord('d')
 
         self.last_steer = steer_msg.data
         self.last_brake = brake_msg.data

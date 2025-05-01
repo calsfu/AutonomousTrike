@@ -12,6 +12,7 @@
 	EncoderA - Encoder channel A (pin 2, interrupt pin)
 	EncoderB - Encoder channel B (pin 3)
 */
+
 // Lights
 #define LEFT_LIGHT_PIN 12
 #define RIGHT_LIGHT_PIN 5
@@ -34,13 +35,19 @@ const int EncoderA = 2; // Encoder channel A (interrupt pin)
 const int EncoderB = 3; // Encoder channel B
 
 // Constants
-const int MAX_PWM = 255;    	 
+const int MAX_PWM = 50;    	 
 const int MIN_PWM = 50;     	 
-const int pulsesPerRevolution = 20;  // Adjust this based on your encoder
+const int pulsesPerRevolution = 17;  // Adjust this based on your encoder
+const int tolerance = 25;
+const int MIN_ENCODER = -850;
+const int MAX_ENCODER = 850;
 
 // Encoder variables:
 volatile long encoderCount = 0;  	// Pulse counter
 volatile int encoderDirection = 0;   // 1 = forward, -1 = reverse
+int encoderGoal = 0;
+
+const double SCALING_FACTOR = (MAX_ENCODER - MIN_ENCODER) / 3000.0;
 
 // serial read in
 int serial_read_pwm = 0;
@@ -53,6 +60,13 @@ float rpm = 0;  // Stores calculated RPM
 unsigned long lastTurnSignalTime = 0;
 unsigned long turnSignalDuration = 500; // Duration for turn signal in milliseconds
 bool turnSignalState = false;
+
+enum Mode {
+  MANUAL,
+  ANGLE
+};
+
+Mode mode = MANUAL;
 
 void setup() {
   pinMode(enA, OUTPUT);
@@ -75,25 +89,86 @@ void loop() {
   /// TODO: control based on angle
   while(Serial.available() > 0) {
     // Serial.println("recieved");
-    serial_read_pwm = Serial.read(); // 1 byte signed
+    serial_read_pwm = Serial.read(); // 1 byte
+    if(serial_read_pwm == 's') {
+      if(mode == MANUAL) {
+        encoderCount = 0;
+        mode = ANGLE;
+        serial_read_pwm = 0;
+      }
+      else {
+        mode = MANUAL;
+        serial_read_pwm = 107;
+      }
+      return;
+    }
+    else if(serial_read_pwm == 'd') {
+      encoderCount = 0;
+    }
+    else {
+      encoderGoal = getEncoderAngle(serial_read_pwm);
+    }
   }
+  Serial.println(encoderCount);
 
-  run_motor(serial_read_pwm);
+  switch (mode) {
+    case MANUAL:
+      runMotorManual(serial_read_pwm);
+      break;
+    case ANGLE:
+      runMotorAngle(serial_read_pwm);
+      break;
+  }
 }
 
-void run_motor(signed char serial_in) {
+int getEncoderAngle(char key) {
+
+  switch (key) {
+    case 'q': return -1500 * SCALING_FACTOR;
+    case 'w': return -1167 * SCALING_FACTOR;
+    case 'e': return -833 * SCALING_FACTOR;
+    case 'r': return -500 * SCALING_FACTOR;
+    case 't': return -167 * SCALING_FACTOR;
+    case 'y': return 167 * SCALING_FACTOR;
+    case 'u': return 500 * SCALING_FACTOR;
+    case 'i': return 833 * SCALING_FACTOR;
+    case 'o': return 1167 * SCALING_FACTOR;
+    case 'p': return 1500 * SCALING_FACTOR;
+    case 'j': return 106;
+    case 'k': return 107;
+    case 'l': return 108;
+  default:
+    return 0;
+  }
+}
+
+void runMotorAngle(int angle) {
+  // do some translation from angle to encoderCount;
+  // Higher encoder count => more left
+  if(encoderCount < encoderGoal - tolerance) {
+    turnLeft(MAX_PWM);
+  }
+  else if(encoderCount > encoderGoal + tolerance) {
+    turnRight(MAX_PWM);
+  }
+  else {
+    stopMotor();
+  }
+}
+
+void runMotorManual(signed char serial_in) {
 	// Serial.print("serial_in: "); Serial.println(serial_in);
   const unsigned long currentTime = millis();
-  if (serial_in < 0 && encoderCount < 1500) {
+  if (serial_in == 106 && encoderCount < MAX_ENCODER) {
     int pwm_i = constrain(serial_in, MIN_PWM, MAX_PWM);
-    forwardMotor(pwm_i);
+    turnLeft(MAX_PWM);
     steering_state = RIGHT;
     // digitalWrite(RIGHT_LIGHT_PIN, turnSignalState);
     // digitalWrite(LEFT_LIGHT_PIN, LOW);
     lastTime = 0; // ensure it turns on instantly
-  } else if (serial_in > 0 && encoderCount > -1500) {
+  } else if (serial_in == 108 && encoderCount > MIN_ENCODER) {
     int pwm_i = constrain(-serial_in, MIN_PWM, MAX_PWM);
-    reverseMotor(pwm_i);
+    turnRight(MAX_PWM);
     if(currentTime - lastTurnSignalTime >= turnSignalDuration) {
       turnSignalState = !turnSignalState; // Toggle turn signal state
       lastTurnSignalTime = currentTime; // Update last time
@@ -102,7 +177,7 @@ void run_motor(signed char serial_in) {
     // digitalWrite(RIGHT_LIGHT_PIN, LOW);
     steering_state = LEFT;
     lastTime = 0;
-  } else if(serial_in == 0) {
+  } else if(serial_in == 107) {
     stopMotor();
   }
   else {
@@ -110,9 +185,9 @@ void run_motor(signed char serial_in) {
   }
 
   // Change state based on position
-  if(encoderCount > 150) {
+  if(encoderCount > 400) {
     steering_state = LEFT;
-  } else if(encoderCount < -150) {
+  } else if(encoderCount < -400) {
     steering_state = RIGHT;
   } else {
     steering_state = STRAIGHT;
@@ -141,7 +216,7 @@ void run_motor(signed char serial_in) {
 }
 
 // Function to drive the motor forward
-void forwardMotor(int pwm) {
+void turnLeft(int pwm) {
 //   Serial.println("Motor set to forward direction.");
   encoderDirection = 0;
 
@@ -153,7 +228,7 @@ void forwardMotor(int pwm) {
 }
 
 // Function to drive the motor in reverse
-void reverseMotor(int pwm) {
+void turnRight(int pwm) {
 //   Serial.println("Motor set to reverse direction.");
   encoderDirection = 0;
 
