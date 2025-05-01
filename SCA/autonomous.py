@@ -8,6 +8,7 @@ from PIL import Image
 from SCA_classes import Segmentation_Collision_Avoidance, Debug_Timer, Config
 import matplotlib.pyplot as plt
 import multiprocessing
+from multiprocessing import shared_memory
 import threading
 import socket
 import struct
@@ -30,9 +31,12 @@ extended  = False     # Closer-in minimum depth, disparity range is doubled
 subpixel  = False     # Better accuracy for longer distance, fractional disparity
 pcl_converter = None  # (Set this if you have a point cloud visualizer)
 
+Config.load("config")
+
 noise_thresh = Config.get("noise_thresh")
 kblur = Config.get("kblur")
 safe_cm = Config.get("safe_cm")
+print(safe_cm)
 boxes = Config.get("boxes")
 box_ring = Config.get("box_ring")
 ebrake = Emergency_Brake(noise_thresh, kblur, safe_cm, boxes, box_ring, SHOW_WHAT_IT_SEES)
@@ -77,9 +81,17 @@ def convert_to_cv2_frame(name, image):
 def timeDeltaToMilliS(delta) -> float:
     return delta.total_seconds() * 1000
 
-def oakd(rgbd_queue, bad_depth_queue, still_running_queue, on_or_off):
+def oakd(rgbd_queue, bad_depth_queue, rgb_shared_mem, depth_shared_mem, bad_depth_shared_mem, still_running_queue, on_or_off):
     try:
         import depthai as dai
+        
+        dims = Config.get("dimensions")
+        dummy_rgb = np.empty((dims[0], dims[1], 3), dtype=np.uint8)
+        dummy_depth = np.empty((dims[0], dims[1]), dtype=np.uint16)
+
+        rgb_buf = np.ndarray(dummy_rgb.shape, dtype=dummy_rgb.dtype, buffer=rgb_shared_mem.buf)
+        depth_buf = np.ndarray(dummy_depth.shape, dtype=dummy_depth.dtype, buffer=depth_shared_mem.buf)
+        bad_depth_buf = np.ndarray(dummy_depth.shape, dtype=dummy_depth.dtype, buffer=bad_depth_shared_mem.buf)
 
         while True:
 
@@ -157,28 +169,46 @@ def oakd(rgbd_queue, bad_depth_queue, still_running_queue, on_or_off):
                             if depthframe is not None:
                                 depth = convert_to_cv2_frame('depth', depthframe)
                             if rgb is not None and depth is not None:
-                                while not rgbd_queue.empty():
-                                    rgbd_queue.get()
-                                rgbd_queue.put([rgb, depth])
+                                rgb_buf[:] = rgb[:]
+                                depth_buf[:] = depth[:]
+                                rgbd_queue.put(0)
+                                # plt.imshow(rgb)
+                                # plt.savefig("figs/rgb.jpg", dpi=100)
+                                # plt.close()
+                                # plt.imshow(depth)
+                                # plt.savefig("figs/depth.jpg", dpi=100)
+                                # plt.close()
                                 still_running_queue.put(0)
                                 rgb = None
                                 depth = None
                             if bad_depthframe is not None:
                                 depth = convert_to_cv2_frame('bad_depth', bad_depthframe)
-                                while not bad_depth_queue.empty():
-                                    bad_depth_queue.get()
-                                bad_depth_queue.put(depth)
+                                bad_depth_buf[:] = depth[:]
+                                # plt.imshow(depth)
+                                # plt.savefig("figs/bad_depth.jpg", dpi=100)
+                                # plt.close()
+                                bad_depth_queue.put(0)
     except RuntimeError:
         print("runtime error")
         still_running_queue.put(0)
 
-def run_sca(sca, rgbd_queue, steering_queue, steering_on):
+def run_sca(sca, rgbd_queue, rgb_shared_mem, depth_shared_mem, steering_queue, steering_on):
+    dims = Config.get("dimensions")
+    rgb = np.empty((dims[0], dims[1], 3), dtype=np.uint8)
+    depth = np.empty((dims[0], dims[1]), dtype=np.uint16)
+
+    rgb_buf = np.ndarray(rgb.shape, dtype=rgb.dtype, buffer=rgb_shared_mem.buf)
+    depth_buf = np.ndarray(depth.shape, dtype=depth.dtype, buffer=depth_shared_mem.buf)
+
     last_val = None
     while True:
         # try:
             while True:
                 if not rgbd_queue.empty():
-                    rgb, depth = rgbd_queue.get()
+                    while not rgbd_queue.empty():
+                        rgbd_queue.get()
+                    rgb[:] = rgb_buf[:]
+                    depth[:] = depth_buf[:]
                     steer = sca.add_np_array(np.copy(rgb), np.copy(depth), 0)
                     print("steering: " + str(steer))
                     if steer == last_val:
@@ -191,19 +221,28 @@ def run_sca(sca, rgbd_queue, steering_queue, steering_on):
                         steering_queue.put(push_steer)
                         steering_on = 1
                     # if SHOW_WHAT_IT_SEES:
-                    #     fig = sca.plot()
-                    #     plt.savefig("figs/sca.jpg", dpi=100)
-                    #     plt.close()
+                        # fig = sca.plot()
+                        # plt.savefig("figs/sca.jpg", dpi=100)
+                        # plt.close()
         # except:
         #     print("it broke:(")
 
-def run_emergency_brake(bad_depth_queue, braking_queue, steering_on):
+def run_emergency_brake(bad_depth_queue, bad_depth_shared_mem, braking_queue, steering_on):
+    dims = Config.get("dimensions")
+    depth = np.empty((dims[0], dims[1]), dtype=np.uint16)
+    bad_depth_buf = np.ndarray(depth.shape, dtype=depth.dtype, buffer=bad_depth_shared_mem.buf)
+
     last_val = None
     while True:
         # try:
-            while True:
+            # while True:
                 if not bad_depth_queue.empty(): 
-                    depth = bad_depth_queue.get()
+                    while not bad_depth_queue.empty():
+                        bad_depth_queue.get()
+                    depth[:] = bad_depth_buf[:]
+                    # plt.imshow(depth)
+                    # plt.savefig("figs/bad_depth_for_brake.jpg", dpi=100)
+                    # plt.close()
                     brake_val = ebrake.get_brake(depth)
                     print("brake: " + str(brake_val))
                     if brake_val == last_val or not steering_on:
@@ -214,7 +253,7 @@ def run_emergency_brake(bad_depth_queue, braking_queue, steering_on):
                     #     braking_queue.get()
                     braking_queue.put(push_brake)
         # except:
-        #     pass
+        #     print("EB broke")
 
 def send_socket(server_connection, steering_queue, braking_queue, on_or_off):
 
@@ -252,7 +291,7 @@ def send_socket(server_connection, steering_queue, braking_queue, on_or_off):
 
     while True:
         # try:
-            t1 = threading.Thread(target=send, args=(steering_queue, braking_queue,))
+            t1 = threading.Thread(target=send, args=(server_connection, steering_queue, braking_queue,))
             t2 = threading.Thread(target=receive, args=(on_or_off,))
             t1.start()
             t2.start()
@@ -277,15 +316,21 @@ def run(sca, server_connection):
     try:
         rgbd_queue = multiprocessing.Queue()
         bad_depth_queue = multiprocessing.Queue()
+        dims = Config.get("dimensions")
+        dummy_rgb = np.empty((dims[0], dims[1], 3), dtype=np.uint8)
+        dummy_depth = np.empty((dims[0], dims[1]), dtype=np.uint16)
+        rgb_shared_mem = shared_memory.SharedMemory(create=True, size=dummy_rgb.nbytes)
+        depth_shared_mem = shared_memory.SharedMemory(create=True, size=dummy_depth.nbytes)
+        bad_depth_shared_mem = shared_memory.SharedMemory(create=True, size=dummy_depth.nbytes)
         steering_queue = multiprocessing.Queue()
         braking_queue = multiprocessing.Queue()
         still_running_queue = multiprocessing.Queue()
-        on_or_off = multiprocessing.Value('i', 0)
+        on_or_off = multiprocessing.Value('i', 1)
         steering_on = multiprocessing.Value('i', 0)
 
-        p1 = multiprocessing.Process(target=oakd, args=(rgbd_queue, bad_depth_queue, still_running_queue, on_or_off,))
-        p2 = multiprocessing.Process(target=run_sca, args=(sca, rgbd_queue, steering_queue, steering_on,))
-        p3 = multiprocessing.Process(target=run_emergency_brake, args=(bad_depth_queue, braking_queue, steering_on,))
+        p1 = multiprocessing.Process(target=oakd, args=(rgbd_queue, bad_depth_queue, rgb_shared_mem, depth_shared_mem, bad_depth_shared_mem, still_running_queue, on_or_off,))
+        p2 = multiprocessing.Process(target=run_sca, args=(sca, rgbd_queue, rgb_shared_mem, depth_shared_mem, steering_queue, steering_on,))
+        p3 = multiprocessing.Process(target=run_emergency_brake, args=(bad_depth_queue, bad_depth_shared_mem, braking_queue, steering_on,))
         p4 = multiprocessing.Process(target=send_socket, args=(server_connection, steering_queue, braking_queue, on_or_off,))
         p5 = multiprocessing.Process(target=rebooter, args=(still_running_queue, on_or_off))
 
