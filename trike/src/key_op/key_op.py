@@ -72,17 +72,6 @@ class KeyOp(Node):
         Timer function to be run to fetch a character if a key is pressed
         '''
         key = self.getch_()
-        
-        # brake message
-        brake_msg = Int8()
-        brake_msg.data = self.last_brake
-
-        # steer message
-        # steer_msg = Float32()
-        # steer_msg.data = 0.0
-
-        steer_msg = Int8()
-        steer_msg.data = self.last_steer
 
         # check for quit
         if(key == 'q'):
@@ -90,42 +79,39 @@ class KeyOp(Node):
             self.destroy_node()
         # check for activate brake
         # 0 for activate brake, 1 for release brake
-        if(key == 'w'):
-            brake_msg.data = 0
-        elif(key == 's'):
-            brake_msg.data = 1
 
-
-        # check for steer
-        # if(key == 'a'):
-        #     steer_msg.data = -1.0
-        # elif(key == 'd'):
-        #     steer_msg.data = 1.0
-
-        # j for left, k for straight, l for right
-        if(key == 'j'):
-            steer_msg.data = ord('j')
-        elif(key == 'k'):
-            steer_msg.data = ord('k')
-        elif(key == 'l'):
-            steer_msg.data = ord('l')
-        elif(key == 'd'):
-            steer_msg.data = ord('d')
-        elif(key == 'f'):
-            steer_msg.data = ord('f')
-        elif(key == 'g'):
-            steer_msg.data = ord('g')
-
-        self.last_steer = steer_msg.data
-        self.last_brake = brake_msg.data
-
-        # publish messages
-        self.brake_publisher_.publish(brake_msg)
-        self.steer_publisher_.publish(steer_msg)
-
-        # log info
-        self.get_logger().info(f'Publishing: {brake_msg.data} to /control/brake')
-        self.get_logger().info(f'Publishing: {steer_msg.data} to /control/steer')
+        if self.is_brake_command(key):
+            # w for activate brake, s for release brake
+            brake_msg = Int8()
+            brake_msg.data = self.last_brake
+            if key == 'w':
+                brake_msg.data = 0
+            elif key == 's':
+                brake_msg.data = 1
+            self.brake_publisher_.publish(brake_msg)
+            self.last_brake = brake_msg.data       
+            self.get_logger().info(f'Publishing: {brake_msg.data} to /control/brake')
+            
+        elif self.is_steer_command(key):
+            # j for left, k for straight, l for right
+            steer_msg = Char()
+            steer_msg.data = self.last_steer
+            steer_msg.data = ord(key)
+            self.steer_publisher_.publish(steer_msg)
+            self.last_steer = steer_msg.data
+            self.get_logger().info(f'Publishing: {steer_msg.data} to /control/steer')
+        
+    def is_brake_command(self, key):
+        '''
+        Checks if the key pressed is a brake command
+        '''
+        return key == 'w' or key == 's'
+    
+    def is_steer_command(self, key):
+        '''
+        Checks if the key pressed is a steer command
+        '''
+        return key == 'q' or key == 'w' or key == 'e' or key == 'r' or key == 't' or key == 'y' or key == 'u' or key == 'i' or key == 'o' or key == 'p' or key == 'j' or key == 'k' or key == 'l' or key == 'd'
 
 def main(args=None):
     rclpy.init(args=args)  # Initialize ROS2

@@ -3,7 +3,7 @@ import rclpy
 import sounddevice as sd
 import os
 import soundfile as sf
-from std_msgs.msg import Int8
+from std_msgs.msg import Int8, String
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
 from enum import Enum
@@ -33,19 +33,31 @@ class AudioPlayer(Node):
             self.get_logger().error(f"Audio directory {self.audio_dir} does not exist.")
             return
         self.create_subscription(Int8, 'audio_command', self.listener_callback, 10)
+        self.create_subscription(String, 'speech_file_name', self.temp_callback, 10)
         self.audio_data = {}
         self.preload_audio_files()
         self.get_logger().info('Audio Player Initialized')
-
-    def listener_callback(self, msg):
+        self.desired_output_name = "USB2.0 Device: Audio"
+        self.get_logger().info(f"Desired output device: {self.find_input_device(self.desired_output_name)}")
+        sd.default.device = self.find_input_device(self.desired_output_name)  # or 26
+    def temp_callback(self, msg):
         command = msg.data
         self.play_audio(command)
         self.get_logger().info(f"Received audio command: {command}")
-        # if command in AudioFile._value2member_map_:
-        #     audio_file = AudioFile._filename_map[AudioFile(command)]
-        #     self.play_audio(audio_file)
-        # else:
-        #     self.get_logger().error(f"Invalid audio command: {command}")
+        try:
+            data, samplerate = self.audio_data[command]
+            sd.play(data, samplerate)
+            self.get_logger().info(f"Playing audio for command: {audio_files[command]}")
+            # sd.wait()
+        except Exception as e:
+            self.get_logger().error(f"Error playing audio file {audio_files[command]}: {e}")
+
+    def listener_callback(self, msg):
+        file_path = msg.data
+        data, fs = sf.read(file_path, dtype='float32')
+        sd.play(data, fs)
+        self.get_logger().info(f"Playing audio file: {file_path}")
+
 
     def play_audio(self, command):
         try:
@@ -55,6 +67,13 @@ class AudioPlayer(Node):
             # sd.wait()
         except Exception as e:
             self.get_logger().error(f"Error playing audio file {audio_files[command]}: {e}")
+
+    def find_input_device(self, name):
+        devices = sd.query_devices()
+        for idx, dev in enumerate(devices):
+            if name in dev['name']:
+                return idx
+        raise RuntimeError(f"Input device with name '{name}' not found.")
 
     def preload_audio_files(self):
         for command, file_name in audio_files.items():

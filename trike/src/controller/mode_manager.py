@@ -2,7 +2,7 @@
 import rclpy
 import Jetson.GPIO as GPIO
 from rclpy.node import Node
-from std_msgs.msg import Int8
+from std_msgs.msg import Int8, Char
 
 PARK = 0
 NEUTRAL = 1
@@ -30,6 +30,8 @@ class ModeManager(Node):
         super().__init__('mode_manager')
         self.mode_publisher = self.create_publisher(Int8, 'mode', 10)
         self.audio_publisher = self.create_publisher(Int8, 'audio_command', 10)
+        self.steering_publisher = self.create_publisher(Char, '/control/steering/new', 10)
+
         self.int_to_mode = {
             PARK: 'Park',
             NEUTRAL: 'Neutral',
@@ -59,11 +61,11 @@ class ModeManager(Node):
 
     def check_mode(self):
         if GPIO.input(self.neutral_pin) == GPIO.LOW:
-            self.set_mode(NEUTRAL)
-        elif GPIO.input(self.manual_pin) == GPIO.LOW:
             self.set_mode(MANUAL)
-        elif GPIO.input(self.autonomous_pin) == GPIO.LOW:
+        elif GPIO.input(self.manual_pin) == GPIO.LOW:
             self.set_mode(AUTONOMOUS)
+        # elif GPIO.input(self.autonomous_pin) == GPIO.LOW:
+        #     self.set_mode(AUTONOMOUS)
         else:
             self.set_mode(PARK)
         # self.get_logger().info(f'Mode: {self.mode}')
@@ -71,6 +73,7 @@ class ModeManager(Node):
     def set_mode(self, mode):
         if mode == self.mode: # Just in case
             return
+            
         self.mode = mode
         msg = Int8()
         msg.data = self.mode

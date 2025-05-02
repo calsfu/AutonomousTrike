@@ -25,6 +25,7 @@
 
   STEERING_STATE steering_state = STRAIGHT;
 
+  
   // Motor driver pins:
   const int enA = 9;  	// PWM control for motor speed
   const int in1 = 8;  	// Motor driver input 1
@@ -41,6 +42,7 @@
   const int tolerance = 25;
   const int MIN_ENCODER = -850;
   const int MAX_ENCODER = 850;
+  const int LIGHT_TIMEOUT = 5000; // 5 seconds
 
   // Encoder variables:
   volatile long encoderCount = 0;  	// Pulse counter
@@ -50,7 +52,7 @@
   const double SCALING_FACTOR = (MAX_ENCODER - MIN_ENCODER) / 3000.0;
 
   // serial read in
-  int serial_read_pwm = 0;
+  char key = 0;
 
   // Time tracking for RPM calculation
   unsigned long lastTime = 0;
@@ -60,13 +62,6 @@
   unsigned long lastTurnSignalTime = 0;
   unsigned long turnSignalDuration = 500; // Duration for turn signal in milliseconds
   bool turnSignalState = false;
-
-  enum Mode {
-    MANUAL,
-    ANGLE
-  };
-
-  Mode mode = MANUAL;
 
   void setup() {
     pinMode(enA, OUTPUT);
@@ -87,44 +82,52 @@
 
   void loop() {
     /// TODO: control based on angle
+    
     while(Serial.available() > 0) {
       // Serial.println("recieved");
-      serial_read_pwm = Serial.read(); // 1 byte
-      if(serial_read_pwm == 'g') {
-        if(mode == MANUAL) {
-          encoderCount = 0;
-          mode = ANGLE;
-          serial_read_pwm = 0;
-        }
-        else {
-          mode = MANUAL;
-          serial_read_pwm = 107;
-        }
-        return;
-      }
-      else if(serial_read_pwm == 'd') {
+      key = Serial.read(); // 1 byte
+      if(key == 'd') {
         encoderCount = 0;
       }
-      else if(serial_read_pwm == 'f') {
+      else if(key == 'f') {
         freeMotor();
       }
       else {
-        encoderGoal = getEncoderAngle(serial_read_pwm);
+        encoderGoal = getEncoderAngle(key);
       }
     }
-    Serial.println(encoderCount);
 
-    switch (mode) {
-      case MANUAL:
-        runMotorManual(serial_read_pwm);
-        break;
-      case ANGLE:
-        runMotorAngle(serial_read_pwm);
-        break;
+    if(isAngle(key)) {
+      runMotorAngle(key);
     }
+    else if(isManual(key)) {
+      runMotorManual(key);
+    }
+    // digitalWrite(LEFT_LIGHT_PIN, HIGH);
+    // digitalWrite(RIGHT_LIGHT_PIN, LOW);
+
+    // delay(1000);
+    // digitalWrite(LEFT_LIGHT_PIN, LOW);
+    // digitalWrite(RIGHT_LIGHT_PIN, HIGH);
+
+    // delay(1000);
+    
+  }
+  
+
+  bool isAngle(char key) {
+    if(key == 'q' || key == 'w' || key == 'e' || key == 'r' || key == 't' || key == 'y' || key == 'u' || key == 'i' || key == 'o' || key == 'p') {
+      return true;
+    }
+    return false;
   }
 
-
+  bool isManual(char key) {
+    if(key == 'j' || key == 'k' || key == 'l') {
+      return true;
+    }
+    return false;
+  }
 
   int getEncoderAngle(char key) {
 
@@ -167,9 +170,7 @@
     if (serial_in == 106 && encoderCount < MAX_ENCODER) {
       int pwm_i = constrain(serial_in, MIN_PWM, MAX_PWM);
       turnLeft(MAX_PWM);
-      steering_state = RIGHT;
-      // digitalWrite(RIGHT_LIGHT_PIN, turnSignalState);
-      // digitalWrite(LEFT_LIGHT_PIN, LOW);
+      // steering_state = RIGHT;
       lastTime = 0; // ensure it turns on instantly
     } else if (serial_in == 108 && encoderCount > MIN_ENCODER) {
       int pwm_i = constrain(-serial_in, MIN_PWM, MAX_PWM);
@@ -180,7 +181,7 @@
       }
       // digitalWrite(LEFT_LIGHT_PIN, turnSignalState);
       // digitalWrite(RIGHT_LIGHT_PIN, LOW);
-      steering_state = LEFT;
+      // steering_state = LEFT;
       lastTime = 0;
     } else if(serial_in == 107) {
       stopMotor();
@@ -280,7 +281,6 @@
   }
 
   // Interrupt Service Routine (ISR) for Encoder
-  // when a!=b, forward, count--;
   // when a==b, reverse, count++;
   void encoderISR() {
     if (digitalRead(EncoderA) == digitalRead(EncoderB)) {

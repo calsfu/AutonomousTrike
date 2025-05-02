@@ -29,7 +29,6 @@ public:
             // rclcpp::shutdown();
         }
 
-
         unsigned char byte = 0;
         boost::asio::write(serial_port_, boost::asio::buffer(&byte, sizeof(byte)));
 
@@ -42,11 +41,17 @@ public:
             boost::asio::write(serial_port_, boost::asio::buffer(&byte, sizeof(byte)));
             RCLCPP_INFO(this->get_logger(), "Sent: %d", byte);
             if(byte == 'j') {
-                audio_msg.data = trike::TURNING_LEFT;
-                audio_publisher_->publish(audio_msg);
+                if(last_mode_ != trike::TURNING_LEFT) {
+                    audio_msg.data = trike::TURNING_LEFT;
+                    audio_publisher_->publish(audio_msg);
+                }
+                last_mode_ = trike::TURNING_LEFT;
             } else if(byte == 'l') {
-                audio_msg.data = trike::TURNING_RIGHT;
-                audio_publisher_->publish(audio_msg); 
+                if(last_mode_ != trike::TURNING_RIGHT) {
+                    audio_msg.data = trike::TURNING_RIGHT;
+                    audio_publisher_->publish(audio_msg);
+                }
+                last_mode_ = trike::TURNING_RIGHT;
             }
         }
     }
@@ -57,6 +62,7 @@ private:
     boost::asio::io_service io_;
     boost::asio::serial_port serial_port_;
     const std::string port_ = "/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_85935333337351507061-if00";
+    int last_mode_ = 0;
 };
 
 int main(int argc, char *argv[]) {

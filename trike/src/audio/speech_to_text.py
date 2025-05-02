@@ -10,6 +10,7 @@ import queue
 import Jetson.GPIO as GPIO
 import pyttsx3
 import time
+import os
 
 class SpeechToTextNode(Node):
     def __init__(self):
@@ -21,14 +22,14 @@ class SpeechToTextNode(Node):
         GPIO.setup(self.BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
         # === Vosk Setup ===
-        self.model = vosk.Model("/home/coler/AutonomousTrike/trike/voice_assist/vosk-model-small-en-us-0.15")
+        self.model = vosk.Model("/home/coler/vosk-model-small-en-us-0.15")
         self.q = queue.Queue()
 
         # === TTS Setup ===
         self.engine = pyttsx3.init()
 
         # === ROS2 Publisher ===
-        self.publisher_ = self.create_publisher(String, 'speech_text', 10)
+        self.publisher_ = self.create_publisher(String, 'speech_file_name', 10)
 
         # === Button State Tracking ===
         self.previous_state = GPIO.input(self.BUTTON_PIN)
@@ -36,8 +37,28 @@ class SpeechToTextNode(Node):
         self.last_pressed = time.time()
 
         # === Sounddevice Setup ===
-        self.desired_mic_name = "Mic"
+        self.desired_mic_name = "Samson Go Mic"
+        # self.desired_speaker_name = "USB2.0 Device: Audio"
         self.mic_index = self.find_input_device(self.desired_mic_name)
+        # self.speaker_index = self.find_output_device(self.desired_speaker_name)
+        self.get_logger().info(f"Mic index: {self.mic_index}")
+        # change default sounddevice device
+        os.system('pactl set-default-sink alsa_output.usb-Generic_USB2.0_Device_20121120222016-00.analog-stereo')
+        os.environ["PULSE_SINK"] = "alsa_output.usb-Generic_USB2.0_Device_20121120222016-00.analog-stereo"
+
+        # try:
+        engine = pyttsx3.init()
+        engine.save_to_file("Hello!", "/tmp/tts.wav")
+        engine.runAndWait()
+        self.publisher_.publish(String(data="/tmp/tts.wav"))
+
+        self.destinations = {
+            "library": "Mugar Memorial Library, Boston MA",
+            "gym": "FitRec Center, 915 Commonwealth Ave",
+            "engineering resource building": "Boston University College of Engineering, 44 Cummington Mall",
+            "photonics": "Boston University Photonics Center, 8 Saint Mary's Street",
+            "epic": "Boston University Engineering Product and Innovation Center, 750 Commonwealth Ave"
+        }
 
         # === Timer to Check Button ===
         self.create_timer(0.01, self.check_button)
@@ -50,14 +71,23 @@ class SpeechToTextNode(Node):
             if name in dev['name']:
                 return idx
         raise RuntimeError(f"Input device with name '{name}' not found.")
+    
+    def find_output_device(self, name):
+        devices = sd.query_devices()
+        for idx, dev in enumerate(devices):
+            if name.lower() in dev['name'].lower() and dev['max_output_channels'] > 0:
+                return idx
+        raise RuntimeError(f"Output device with name '{name}' not found.")
 
     def callback(self, indata, frames, time_info, status):
         self.q.put(bytes(indata))
 
     def speak(self, message):
         self.get_logger().info(f"TTS: {message}")
-        self.engine.say(message)
+        # self.engine.say(message)
+        self.engine.save_to_file(message, "/tmp/tts.wav")
         self.engine.runAndWait()
+        self.publisher_.publish(String(data="/tmp/tts.wav"))
 
     def listen_and_recognize(self):
         with sd.RawInputStream(device=self.mic_index,
@@ -89,11 +119,19 @@ class SpeechToTextNode(Node):
                     msg = String()
                     msg.data = spoken_text
                     self.publisher_.publish(msg)
-                    self.speak(f"Setting destination to {spoken_text}")
+                    # self.speak(f"Setting destination to {spoken_text}")
+                    self.process_destination(spoken_text)
                 else:
                     self.speak("I didn't catch that. Try again.")
 
         self.previous_state = input_state
+
+    def process_destination(self, spoken_text):
+        for keyword, full_location in self.destinations.items():
+            if keyword in spoken_text:
+                self.speak(f"Setting destination to {keyword}, located at {full_location}.")
+                return
+        self.speak("Destination not recognized. Please try again.")
 
     def destroy_node(self):
         GPIO.cleanup()

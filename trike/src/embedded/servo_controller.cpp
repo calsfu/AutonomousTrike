@@ -41,11 +41,17 @@ public:
             boost::asio::write(serial_port_, boost::asio::buffer(&byte, sizeof(byte)));
             RCLCPP_INFO(this->get_logger(), "Sent: %d", byte);
             if(byte == 0) {
-                audio_msg.data = trike::BRAKES_OFF;
-                audio_publisher_->publish(audio_msg);
+                if(lastMode == trike::BRAKES_ON) {
+                    audio_msg.data = trike::BRAKES_OFF;
+                    audio_publisher_->publish(audio_msg);
+                }
+                lastMode = trike::BRAKES_OFF;
             } else {
-                audio_msg.data = trike::BRAKES_ON;
-                audio_publisher_->publish(audio_msg); 
+                if(lastMode == trike::BRAKES_OFF) {
+                    audio_msg.data = trike::BRAKES_ON;
+                    audio_publisher_->publish(audio_msg);
+                }
+                lastMode = trike::BRAKES_ON;
             }
         }
     }
@@ -55,6 +61,7 @@ private:
     rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr audio_publisher_;
     boost::asio::io_service io_;
     boost::asio::serial_port serial_port_;
+    int lastMode = trike::BRAKES_ON;
     const std::string port = "/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_95032303537351918032-if00";
 };
 
