@@ -39,10 +39,19 @@ class SpeechToTextNode(Node):
         self.desired_mic_name = "Mic"
         self.mic_index = self.find_input_device(self.desired_mic_name)
 
+        # === Valid Destinations ===
+        self.destinations = {
+            "library": "Mugar Memorial Library, Boston MA",
+            "gym": "FitRec Center, 915 Commonwealth Ave",
+            "engineering resource building": "Boston University College of Engineering, 44 Cummington Mall",
+            "photonics": "Boston University Photonics Center, 8 Saint Mary's Street",
+            "epic": "Boston University Engineering Product and Innovation Center, 750 Commonwealth Ave"
+        }
+
         # === Timer to Check Button ===
         self.create_timer(0.01, self.check_button)
 
-        self.speak("Press the button to speak.")
+        self.speak("Press and hold the button to speak.")
 
     def find_input_device(self, name):
         devices = sd.query_devices()
@@ -67,13 +76,26 @@ class SpeechToTextNode(Node):
                                channels=1,
                                callback=self.callback):
             rec = vosk.KaldiRecognizer(self.model, 16000)
-            self.get_logger().info("Listening...")
+            self.get_logger().info("Listening... Hold the button while speaking.")
+
+            start_time = time.time()
+            recognized_text = ""
 
             while True:
-                data = self.q.get()
-                if rec.AcceptWaveform(data):
-                    result = json.loads(rec.Result())
-                    return result.get('text', '')
+                if not GPIO.input(self.BUTTON_PIN):  # Button still pressed
+                    if not self.q.empty():
+                        data = self.q.get()
+                        if rec.AcceptWaveform(data):
+                            result = json.loads(rec.Result())
+                            recognized_text = result.get('text', '')
+                            if recognized_text:
+                                break
+                    elif time.time() - start_time > 5:  # timeout
+                        break
+                else:  # Button released
+                    break
+
+            return recognized_text.strip()
 
     def check_button(self):
         input_state = GPIO.input(self.BUTTON_PIN)
@@ -82,24 +104,30 @@ class SpeechToTextNode(Node):
             now = time.time()
             if now - self.last_pressed > self.debounce_time:
                 self.last_pressed = now
-                self.speak("Recording!")
+                self.speak("Recording. Hold the button while you speak.")
                 spoken_text = self.listen_and_recognize()
                 if spoken_text:
                     self.get_logger().info(f"Recognized: {spoken_text}")
                     msg = String()
                     msg.data = spoken_text
                     self.publisher_.publish(msg)
-                    self.speak(f"Setting destination to {spoken_text}")
+                    self.process_destination(spoken_text)
                 else:
                     self.speak("I didn't catch that. Try again.")
 
         self.previous_state = input_state
 
+    def process_destination(self, spoken_text):
+        for keyword, full_location in self.destinations.items():
+            if keyword in spoken_text:
+                self.speak(f"Setting destination to {keyword}, located at {full_location}.")
+                return
+        self.speak("Destination not recognized. Please try again.")
+
     def destroy_node(self):
         GPIO.cleanup()
         self.engine.stop()
         super().destroy_node()
-
 
 def main(args=None):
     rclpy.init(args=args)
@@ -111,7 +139,6 @@ def main(args=None):
     finally:
         node.destroy_node()
         rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()
